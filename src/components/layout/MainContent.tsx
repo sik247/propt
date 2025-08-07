@@ -164,89 +164,105 @@ const MainContent = () => {
 
           <TabsContent value="testing" className="mt-6">
             <div className="space-y-6">
-              <h3 className="text-xl font-semibold text-foreground">A/B Testing & API Configuration</h3>
+              <h3 className="text-xl font-semibold text-foreground">A/B Testing & Model Comparison</h3>
               <p className="text-muted-foreground">
-                Configure your API keys and run A/B tests with different AI models.
+                Compare prompts across different AI models with visual results.
               </p>
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* API Keys Section */}
+                {/* Prompt Input Section */}
                 <div className="space-y-4">
-                  <h4 className="text-lg font-medium text-foreground">API Keys</h4>
+                  <h4 className="text-lg font-medium text-foreground">Prompt Input</h4>
+                  
                   <div className="space-y-3">
-                    {[
-                      { name: "OpenAI API Key", placeholder: "sk-..." },
-                      { name: "Anthropic API Key", placeholder: "sk-ant-..." },
-                      { name: "Google AI API Key", placeholder: "AIza..." },
-                      { name: "Mistral API Key", placeholder: "..." }
-                    ].map((api) => (
-                      <div key={api.name} className="space-y-2">
-                        <Label htmlFor={api.name.toLowerCase().replace(/\s+/g, '-')} className="text-foreground">
-                          {api.name}
-                        </Label>
-                        <Input 
-                          id={api.name.toLowerCase().replace(/\s+/g, '-')}
-                          type="password"
-                          placeholder={api.placeholder}
-                          className="bg-input border-border text-foreground"
-                        />
-                      </div>
-                    ))}
-                    <Button className="w-full bg-primary hover:bg-primary/90">
-                      Save API Keys
-                    </Button>
-                  </div>
-                </div>
-
-                {/* A/B Testing Section */}
-                <div className="space-y-4">
-                  <h4 className="text-lg font-medium text-foreground">A/B Test Setup</h4>
-                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <Button variant="outline" className="flex-1">
+                        Upload .md File
+                      </Button>
+                      <Button variant="outline" className="flex-1">
+                        Paste Prompt
+                      </Button>
+                    </div>
+                    
                     <div className="space-y-2">
-                      <Label htmlFor="test-prompt" className="text-foreground">Test Prompt</Label>
+                      <Label htmlFor="test-prompt" className="text-foreground">Prompt Content</Label>
                       <textarea 
                         id="test-prompt"
                         placeholder="Enter your prompt to test across different models..."
-                        className="w-full h-24 px-3 py-2 rounded-md border border-border bg-input text-foreground placeholder:text-muted-foreground resize-none"
+                        className="w-full h-32 px-3 py-2 rounded-md border border-border bg-input text-foreground placeholder:text-muted-foreground resize-none"
                       />
                     </div>
                     
                     <div className="space-y-2">
-                      <Label className="text-foreground">Select Models to Test</Label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {[
-                          "GPT-4", "GPT-3.5", "Claude-3", "Gemini Pro", 
-                          "Mistral Large", "LLaMA 2"
-                        ].map((model) => (
-                          <div key={model} className="flex items-center space-x-2">
-                            <input 
-                              type="checkbox" 
-                              id={model.toLowerCase().replace(/[\s.-]/g, '-')}
-                              className="rounded border-border"
-                            />
-                            <Label 
-                              htmlFor={model.toLowerCase().replace(/[\s.-]/g, '-')} 
-                              className="text-sm text-foreground"
-                            >
-                              {model}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
+                      <Label htmlFor="query-input" className="text-foreground">Test Query</Label>
+                      <Input 
+                        id="query-input"
+                        placeholder="Enter a test query to evaluate responses..."
+                        className="bg-input border-border text-foreground"
+                      />
                     </div>
-                    
-                    <Button className="w-full bg-primary hover:bg-primary/90">
-                      Start A/B Test
-                    </Button>
                   </div>
+                </div>
+
+                {/* Model Selection Section */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-medium text-foreground">Select AI Models</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { name: "GPT-4", company: "OpenAI", logo: "🤖" },
+                      { name: "Claude-3", company: "Anthropic", logo: "🧠" },
+                      { name: "Gemini Pro", company: "Google", logo: "🔍" },
+                      { name: "Mistral Large", company: "Mistral", logo: "⚡" },
+                      { name: "LLaMA 2", company: "Meta", logo: "📘" },
+                      { name: "Perplexity", company: "Perplexity", logo: "🔮" }
+                    ].map((model) => (
+                      <div key={model.name} className="flex items-center gap-3 p-3 border border-border rounded-lg hover:bg-muted cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          id={model.name.toLowerCase().replace(/[\s.-]/g, '-')}
+                          className="rounded border-border"
+                        />
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl">{model.logo}</span>
+                          <div>
+                            <div className="text-sm font-medium text-foreground">{model.name}</div>
+                            <div className="text-xs text-muted-foreground">{model.company}</div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <Button className="w-full bg-primary hover:bg-primary/90">
+                    Start Comparison Test
+                  </Button>
                 </div>
               </div>
 
               {/* Test Results */}
-              <div className="mt-8 p-6 bg-card border border-border rounded-lg">
-                <h4 className="text-lg font-medium text-foreground mb-4">Test Results</h4>
-                <div className="text-sm text-muted-foreground">
-                  Results will appear here after running tests...
+              <div className="mt-8 space-y-4">
+                <h4 className="text-lg font-medium text-foreground">Comparison Results</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    { model: "GPT-4", company: "OpenAI", logo: "🤖", score: "9.2/10" },
+                    { model: "Claude-3", company: "Anthropic", logo: "🧠", score: "8.8/10" }
+                  ].map((result) => (
+                    <div key={result.model} className="p-4 bg-card border border-border rounded-lg">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">{result.logo}</span>
+                          <div>
+                            <div className="font-medium text-foreground">{result.model}</div>
+                            <div className="text-xs text-muted-foreground">{result.company}</div>
+                          </div>
+                        </div>
+                        <div className="text-sm font-medium text-primary">{result.score}</div>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Response quality analysis will appear here after testing...
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
