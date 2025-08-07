@@ -17,7 +17,7 @@ const MainContent = () => {
               className="w-8 h-8"
             />
             <h1 className="text-2xl font-bold text-foreground">
-              Prompt Refiner Agent
+              propt
             </h1>
           </div>
         </div>
@@ -50,7 +50,7 @@ const MainContent = () => {
       {/* Main Content Area */}
       <div className="flex-1 p-6">
         <Tabs defaultValue="intro" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-muted">
+          <TabsList className="grid w-full grid-cols-4 bg-muted">
             <TabsTrigger value="intro" className="text-primary data-[state=active]:text-primary">
               Intro
             </TabsTrigger>
@@ -60,12 +60,15 @@ const MainContent = () => {
             <TabsTrigger value="upload" className="data-[state=active]:text-primary">
               Upload & Refine
             </TabsTrigger>
+            <TabsTrigger value="testing" className="data-[state=active]:text-primary">
+              A/B Testing
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="intro" className="mt-6">
             <div className="space-y-6">
               <h2 className="text-3xl font-bold text-foreground">
-                Welcome to the Prompt Refiner Agent!
+                Welcome to propt!
               </h2>
               
               <div className="space-y-4 text-foreground">
@@ -155,6 +158,96 @@ const MainContent = () => {
                 <Button className="bg-primary hover:bg-primary/90">
                   Choose Files
                 </Button>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="testing" className="mt-6">
+            <div className="space-y-6">
+              <h3 className="text-xl font-semibold text-foreground">A/B Testing & API Configuration</h3>
+              <p className="text-muted-foreground">
+                Configure your API keys and run A/B tests with different AI models.
+              </p>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* API Keys Section */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-medium text-foreground">API Keys</h4>
+                  <div className="space-y-3">
+                    {[
+                      { name: "OpenAI API Key", placeholder: "sk-..." },
+                      { name: "Anthropic API Key", placeholder: "sk-ant-..." },
+                      { name: "Google AI API Key", placeholder: "AIza..." },
+                      { name: "Mistral API Key", placeholder: "..." }
+                    ].map((api) => (
+                      <div key={api.name} className="space-y-2">
+                        <Label htmlFor={api.name.toLowerCase().replace(/\s+/g, '-')} className="text-foreground">
+                          {api.name}
+                        </Label>
+                        <Input 
+                          id={api.name.toLowerCase().replace(/\s+/g, '-')}
+                          type="password"
+                          placeholder={api.placeholder}
+                          className="bg-input border-border text-foreground"
+                        />
+                      </div>
+                    ))}
+                    <Button className="w-full bg-primary hover:bg-primary/90">
+                      Save API Keys
+                    </Button>
+                  </div>
+                </div>
+
+                {/* A/B Testing Section */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-medium text-foreground">A/B Test Setup</h4>
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="test-prompt" className="text-foreground">Test Prompt</Label>
+                      <textarea 
+                        id="test-prompt"
+                        placeholder="Enter your prompt to test across different models..."
+                        className="w-full h-24 px-3 py-2 rounded-md border border-border bg-input text-foreground placeholder:text-muted-foreground resize-none"
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label className="text-foreground">Select Models to Test</Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          "GPT-4", "GPT-3.5", "Claude-3", "Gemini Pro", 
+                          "Mistral Large", "LLaMA 2"
+                        ].map((model) => (
+                          <div key={model} className="flex items-center space-x-2">
+                            <input 
+                              type="checkbox" 
+                              id={model.toLowerCase().replace(/[\s.-]/g, '-')}
+                              className="rounded border-border"
+                            />
+                            <Label 
+                              htmlFor={model.toLowerCase().replace(/[\s.-]/g, '-')} 
+                              className="text-sm text-foreground"
+                            >
+                              {model}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <Button className="w-full bg-primary hover:bg-primary/90">
+                      Start A/B Test
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Test Results */}
+              <div className="mt-8 p-6 bg-card border border-border rounded-lg">
+                <h4 className="text-lg font-medium text-foreground mb-4">Test Results</h4>
+                <div className="text-sm text-muted-foreground">
+                  Results will appear here after running tests...
+                </div>
               </div>
             </div>
           </TabsContent>

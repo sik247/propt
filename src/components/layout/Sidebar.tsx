@@ -37,20 +37,23 @@ const Sidebar = () => {
         </div>
       </div>
 
-      {/* AI Services List */}
+      {/* Created Prompts List */}
       <div className="flex-1 p-4">
-        <div className="space-y-1">
-          {aiServices.map((service, index) => (
-            <Button
-              key={service}
-              variant="ghost"
-              className={`w-full justify-start text-left text-foreground hover:bg-muted ${
-                index === 0 ? 'bg-muted' : ''
-              }`}
-            >
-              {service}
-            </Button>
-          ))}
+        <div className="space-y-3">
+          <h3 className="text-sm font-medium text-foreground">Created Prompts</h3>
+          <div className="space-y-1">
+            {aiServices.map((service, index) => (
+              <Button
+                key={service}
+                variant="ghost"
+                className={`w-full justify-start text-left text-foreground hover:bg-muted ${
+                  index === 0 ? 'bg-muted' : ''
+                }`}
+              >
+                {service}
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
 
