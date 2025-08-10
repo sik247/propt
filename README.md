@@ -1,73 +1,169 @@
-# Welcome to your Lovable project
+# Propt - AI Prompt Engineering Tool
 
-## Project info
+A full-stack application that helps you analyze, critique, and improve AI prompts using intelligent agents.
 
-**URL**: https://lovable.dev/projects/3c62098e-7578-41bd-8040-fdae7d707d1d
+## Features
 
-## How can I edit this code?
+- **Extract Instructions**: Automatically identify and extract discrete instructions from prompts
+- **Critique Prompts**: Get detailed analysis of prompt issues and areas for improvement  
+- **Revise Prompts**: Generate improved versions of your prompts with AI assistance
+- **Real-time Analysis**: Live backend integration with immediate feedback
+- **Modern UI**: Built with React, TypeScript, and Tailwind CSS
 
-There are several ways of editing your application.
+## Architecture
 
-**Use Lovable**
+### Frontend
+- **React 18** with TypeScript
+- **Vite** for fast development and building
+- **Tailwind CSS** for styling
+- **shadcn/ui** components
+- **TanStack Query** for API state management
+- **React Router** for navigation
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/3c62098e-7578-41bd-8040-fdae7d707d1d) and start prompting.
+### Backend
+- **FastAPI** for high-performance API endpoints
+- **OpenAI GPT-4** for intelligent prompt analysis
+- **Pydantic** for data validation
+- **Python 3.8+** runtime
 
-Changes made via Lovable will be committed automatically to this repo.
+## Quick Start
 
-**Use your preferred IDE**
+### Prerequisites
+- Node.js 18+ and npm
+- Python 3.8+
+- OpenAI API key
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Installation
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+1. **Clone and install dependencies:**
+   ```bash
+   git clone <your-repo-url>
+   cd propt
+   npm run setup
+   ```
 
-Follow these steps:
+2. **Configure environment:**
+   ```bash
+   # Copy and edit environment files
+   cp .env.example .env
+   cp backend/.env.example backend/.env
+   
+   # Add your OpenAI API key to backend/.env
+   echo "OPENAI_API_KEY=your_api_key_here" >> backend/.env
+   ```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+3. **Start the application:**
+   ```bash
+   # Start both frontend and backend
+   npm run start:full
+   
+   # Or start individually:
+   npm run backend:dev  # Backend on http://localhost:8000
+   npm run dev          # Frontend on http://localhost:8080
+   ```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## Usage
 
-# Step 3: Install the necessary dependencies.
-npm i
+1. **Navigate to http://localhost:8080**
+2. **Go to "Upload & Refine" tab**
+3. **Paste your prompt in the text area**
+4. **Select analysis type:**
+   - Extract Instructions
+   - Critique Prompt  
+   - Revise Prompt
+5. **Click "Analyze Prompt" to get AI-powered insights**
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+## API Endpoints
+
+The backend provides the following API endpoints:
+
+- `GET /health` - Check backend health and OpenAI configuration
+- `POST /api/extract-instructions` - Extract instructions from prompt
+- `POST /api/critique-prompt` - Analyze prompt for issues
+- `POST /api/revise-prompt` - Generate improved prompt version
+- `GET /docs` - Interactive API documentation
+
+## Development
+
+### Frontend Development
+```bash
+npm run dev          # Start Vite dev server
+npm run build        # Build for production
+npm run preview      # Preview production build
+npm run lint         # Run ESLint
 ```
 
-**Edit a file directly in GitHub**
+### Backend Development
+```bash
+cd backend
+python start.py      # Start with startup checks
+# or
+python -m uvicorn main:app --reload  # Direct uvicorn start
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Project Structure
+```
+propt/
+├── src/                    # Frontend React app
+│   ├── components/         # React components
+│   ├── hooks/             # Custom React hooks
+│   ├── lib/               # API services and utilities
+│   └── pages/             # Page components
+├── backend/               # Python FastAPI backend
+│   ├── main.py           # FastAPI application
+│   ├── agents.py         # AI agent logic
+│   ├── utils.py          # Utility functions
+│   ├── requirements.txt  # Python dependencies
+│   └── start.py          # Startup script
+└── package.json          # Node.js configuration
+```
 
-**Use GitHub Codespaces**
+## Configuration
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Environment Variables
 
-## What technologies are used for this project?
+**Frontend (.env):**
+```bash
+VITE_API_URL=http://localhost:8000
+```
 
-This project is built with:
+**Backend (backend/.env):**
+```bash
+OPENAI_API_KEY=your_openai_api_key_here
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Contributing
 
-## How can I deploy this project?
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test both frontend and backend
+5. Submit a pull request
 
-Simply open [Lovable](https://lovable.dev/projects/3c62098e-7578-41bd-8040-fdae7d707d1d) and click on Share -> Publish.
+## Technologies Used
 
-## Can I connect a custom domain to my Lovable project?
+### Frontend Stack
+- Vite + React + TypeScript
+- Tailwind CSS + shadcn/ui
+- TanStack Query for API integration
+- React Router for navigation
+- Sonner for notifications
 
-Yes, you can!
+### Backend Stack  
+- FastAPI for REST API
+- OpenAI GPT-4 for AI capabilities
+- Pydantic for data validation
+- Python-dotenv for configuration
+- Uvicorn ASGI server
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## License
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+MIT License - see LICENSE file for details
+
+## Support
+
+For issues and questions:
+1. Check the [API documentation](http://localhost:8000/docs) when backend is running
+2. Review console logs for debugging
+3. Ensure OpenAI API key is properly configured
+4. Verify both frontend and backend are running
