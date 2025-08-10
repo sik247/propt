@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, Upload } from "lucide-react";
+import PromptAnalyzer from "@/components/PromptAnalyzer";
 
 const MainContent = () => {
   return (
@@ -143,23 +144,7 @@ const MainContent = () => {
           </TabsContent>
           
           <TabsContent value="upload" className="mt-6">
-            <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-foreground">Upload & Refine Your Prompts</h3>
-              <p className="text-muted-foreground">
-                Upload your prompt files and let our AI refine them for optimal performance.
-              </p>
-              
-              <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-                <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-foreground font-medium mb-2">Drop your files here</p>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Supports .md, .txt files up to 10MB
-                </p>
-                <Button className="bg-primary hover:bg-primary/90">
-                  Choose Files
-                </Button>
-              </div>
-            </div>
+            <PromptAnalyzer />
           </TabsContent>
 
           <TabsContent value="testing" className="mt-6">
