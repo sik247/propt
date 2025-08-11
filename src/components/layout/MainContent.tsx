@@ -59,7 +59,7 @@ const MainContent = () => {
               Browse Prompts
             </TabsTrigger>
             <TabsTrigger value="upload" className="data-[state=active]:text-primary">
-              Upload & Refine
+              Analyze & Improve
             </TabsTrigger>
             <TabsTrigger value="testing" className="data-[state=active]:text-primary">
               A/B Testing
@@ -83,10 +83,7 @@ const MainContent = () => {
                 <div className="flex items-start gap-3">
                   <span className="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></span>
                   <div>
-                    <span className="font-semibold">Upload & Refine:</span> Upload your own prompt file (
-                    <code className="bg-muted px-1 rounded text-primary">.md</code> or{" "}
-                    <code className="bg-muted px-1 rounded text-primary">.txt</code>
-                    ) and let the agent refine it.
+                    <span className="font-semibold">Analyze & Improve:</span> Paste your prompt and get a complete analysis: extract instructions, identify issues, and receive improved versions.
                   </div>
                 </div>
                 

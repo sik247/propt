@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { apiService, Instruction, CritiqueIssue } from '@/lib/api';
+import { apiService, Instruction, CritiqueIssue, UnifiedAnalysisData } from '@/lib/api';
 
 export const useHealthCheck = () => {
   return useQuery({
@@ -32,6 +32,15 @@ export const useRevisePrompt = () => {
     mutationFn: (prompt: string) => apiService.revisePrompt(prompt),
     onError: (error) => {
       console.error('Error revising prompt:', error);
+    },
+  });
+};
+
+export const useUnifiedAnalysis = () => {
+  return useMutation({
+    mutationFn: (prompt: string) => apiService.analyzePromptUnified(prompt),
+    onError: (error) => {
+      console.error('Error in unified analysis:', error);
     },
   });
 };

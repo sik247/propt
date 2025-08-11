@@ -5,7 +5,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field 
 import openai 
-from openai import OpenAI 
+from openai import OpenAI
+from agents import Agent, Runner, create_instruction_extractor, create_prompt_critic, create_prompt_reviser
+from utils import load_prompt 
 
 # Load environment variables
 load_dotenv() 
@@ -52,6 +54,11 @@ class PromptRequest(BaseModel):
 class PromptResponse(BaseModel):
     result: str
     data: dict = None
+
+class UnifiedAnalysisResponse(BaseModel):
+    result: str
+    data: dict = None
+    pipeline_results: List[dict] = None
 
 # API Routes
 @app.get("/")
@@ -142,6 +149,83 @@ async def revise_prompt(request: PromptRequest):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error revising prompt: {str(e)}")
+
+@app.post("/api/analyze-prompt", response_model=UnifiedAnalysisResponse)
+async def analyze_prompt_unified(request: PromptRequest):
+    """Run unified prompt analysis pipeline: extract, critique, and revise."""
+    try:
+        # Initialize runner and agents
+        runner = Runner()
+        
+        # Create and add agents
+        extractor = create_instruction_extractor()
+        critic = create_prompt_critic()
+        reviser = create_prompt_reviser()
+        
+        runner.add_agent(extractor)
+        runner.add_agent(critic)
+        runner.add_agent(reviser)
+        
+        # Define pipeline configuration
+        pipeline_config = [
+            {
+                "agent": "instruction_extractor",
+                "response_format": InstructionList
+            },
+            {
+                "agent": "prompt_critic", 
+                "response_format": CritiqueIssues
+            },
+            {
+                "agent": "prompt_reviser",
+                "response_format": RevisedPromptOutput
+            }
+        ]
+        
+        # Run the pipeline
+        pipeline_result = runner.run_pipeline(pipeline_config, request.prompt)
+        
+        if not pipeline_result["success"]:
+            raise HTTPException(status_code=500, detail=pipeline_result["error"])
+        
+        # Process results
+        results = pipeline_result["results"]
+        
+        # Format the unified response
+        formatted_data = {
+            "instructions": [],
+            "issues": [],
+            "revised_prompt": "",
+            "analysis_complete": True
+        }
+        
+        # Extract data from each step
+        if len(results) >= 1 and results[0]["success"]:
+            if hasattr(results[0]["data"], 'instructions'):
+                formatted_data["instructions"] = [inst.dict() for inst in results[0]["data"].instructions]
+            elif isinstance(results[0]["data"], list):
+                formatted_data["instructions"] = results[0]["data"]
+        
+        if len(results) >= 2 and results[1]["success"]:
+            if hasattr(results[1]["data"], 'issues'):
+                formatted_data["issues"] = [issue.dict() for issue in results[1]["data"].issues]
+            elif isinstance(results[1]["data"], list):
+                formatted_data["issues"] = results[1]["data"]
+        
+        if len(results) >= 3 and results[2]["success"]:
+            if hasattr(results[2]["data"], 'value'):
+                formatted_data["revised_prompt"] = results[2]["data"].value
+            elif isinstance(results[2]["data"], str):
+                formatted_data["revised_prompt"] = results[2]["data"]
+        
+        return UnifiedAnalysisResponse(
+            result="success",
+            data=formatted_data,
+            pipeline_results=[{"step": i+1, "success": r["success"], "agent": ["extractor", "critic", "reviser"][i]} for i, r in enumerate(results)]
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error in unified analysis: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn

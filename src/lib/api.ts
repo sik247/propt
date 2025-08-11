@@ -22,6 +22,23 @@ export interface CritiqueIssue {
   suggestion: string;
 }
 
+export interface UnifiedAnalysisData {
+  instructions: Instruction[];
+  issues: CritiqueIssue[];
+  revised_prompt: string;
+  analysis_complete: boolean;
+}
+
+export interface UnifiedAnalysisResponse {
+  result: string;
+  data: UnifiedAnalysisData;
+  pipeline_results?: Array<{
+    step: number;
+    success: boolean;
+    agent: string;
+  }>;
+}
+
 class ApiService {
   private baseUrl: string;
 
@@ -74,6 +91,15 @@ class ApiService {
     const response = await this.makeRequest<PromptResponse>('/api/revise-prompt', {
       method: 'POST',
       body: JSON.stringify({ prompt, task_type: 'revise' }),
+    });
+    
+    return response.data;
+  }
+
+  async analyzePromptUnified(prompt: string): Promise<UnifiedAnalysisData> {
+    const response = await this.makeRequest<UnifiedAnalysisResponse>('/api/analyze-prompt', {
+      method: 'POST',
+      body: JSON.stringify({ prompt }),
     });
     
     return response.data;
