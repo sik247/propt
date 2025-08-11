@@ -4,13 +4,15 @@ from typing import Dict, Any, Optional
 def load_prompt(prompt_name: str, prompts_dir: str = "agent_prompts") -> str:
     """Load a prompt from a file in the prompts directory."""
     try:
-        prompt_path = os.path.join(prompts_dir, f"{prompt_name}.txt")
-        if os.path.exists(prompt_path):
-            with open(prompt_path, 'r', encoding='utf-8') as file:
-                return file.read().strip()
-        else:
-            # Return a default prompt if file doesn't exist
-            return f"Default prompt for {prompt_name}"
+        # Try .md first, then .txt as fallback
+        for ext in ['.md', '.txt']:
+            prompt_path = os.path.join(prompts_dir, f"{prompt_name}{ext}")
+            if os.path.exists(prompt_path):
+                with open(prompt_path, 'r', encoding='utf-8') as file:
+                    return file.read().strip()
+        
+        # If neither exists, return a default prompt
+        return f"Default prompt for {prompt_name}"
     except Exception as e:
         return f"Error loading prompt: {str(e)}"
 
