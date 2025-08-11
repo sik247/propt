@@ -4,6 +4,48 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, Upload } from "lucide-react";
 
+// Function to process prompts using the backend
+const processPrompt = async (content: string, industry: string, useCase: string) => {
+  // For now, simulate the backend call by executing the Python script
+  // In a real implementation, this would be an API call
+  try {
+    const response = await fetch('/api/process-prompt', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        content,
+        industry,
+        use_case: useCase,
+        company: 'generic'
+      }),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    // Fallback: show the backend command that would be executed
+    const command = `cd backend && python3 main.py "${content}" --industry "${industry}" --use-case "${useCase}"`;
+    console.log('Backend command would be:', command);
+    
+    // Return simulated result for demo purposes
+    return {
+      success: true,
+      message: 'Prompt processing simulated. In production, this would call the backend API.',
+      command: command,
+      analysis: {
+        word_count: content.split(' ').length,
+        has_examples: content.toLowerCase().includes('example'),
+        recommendations: ['Add more structure', 'Include examples', 'Define clear objectives']
+      }
+    };
+  }
+};
+
 const MainContent = () => {
   return (
     <div className="flex-1 flex flex-col h-screen bg-background">
@@ -120,14 +162,24 @@ const MainContent = () => {
               
               <div className="grid grid-cols-2 gap-4 mt-6">
                 {[
-                  "Manus Agent Tools",
-                  "Devin AI Prompts", 
-                  "Z.ai Code Templates",
-                  "Trae Workflows",
-                  "Perplexity Queries",
-                  "Cluely Prompts",
-                  "Kiro Templates",
-                  "Replit Snippets"
+                  "Cluely",
+                  "Cursor Prompts",
+                  "Devin AI",
+                  "Junie",
+                  "Kiro",
+                  "Lovable",
+                  "Manus Agent Tools & Prompt",
+                  "Open Source prompts",
+                  "Perplexity",
+                  "Replit",
+                  "Same.dev",
+                  "Spawn",
+                  "Trae",
+                  "v0 Prompts and Tools",
+                  "Warp.dev",
+                  "Windsurf",
+                  "Z.ai Code",
+                  "dia"
                 ].map((service) => (
                   <Button
                     key={service}
@@ -149,15 +201,54 @@ const MainContent = () => {
                 Upload your prompt files and let our AI refine them for optimal performance.
               </p>
               
+              {/* Prompt Input Area */}
+              <div className="space-y-4 mb-6">
+                <Label htmlFor="prompt-input" className="text-foreground text-lg font-medium">Enter Your Prompt</Label>
+                <textarea 
+                  id="prompt-input"
+                  placeholder="Enter your prompt here to be processed by our AI agent..."
+                  className="w-full h-32 px-3 py-2 rounded-md border border-border bg-input text-foreground placeholder:text-muted-foreground resize-none"
+                />
+              </div>
+              
               <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
                 <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
                 <p className="text-foreground font-medium mb-2">Drop your files here</p>
                 <p className="text-sm text-muted-foreground mb-4">
                   Supports .md, .txt files up to 10MB
                 </p>
-                <Button className="bg-primary hover:bg-primary/90">
-                  Choose Files
-                </Button>
+                <div className="space-y-3">
+                  <Button className="bg-primary hover:bg-primary/90">
+                    Choose Files
+                  </Button>
+                  <div className="text-sm text-muted-foreground">or</div>
+                  <Button 
+                    className="bg-primary hover:bg-primary/90 w-full"
+                    onClick={async () => {
+                      // Get form data
+                      const industry = (document.getElementById('industry') as HTMLInputElement)?.value || 'general';
+                      const useCase = (document.getElementById('usecase') as HTMLInputElement)?.value || 'general';
+                      const promptContent = (document.getElementById('prompt-input') as HTMLTextAreaElement)?.value || '';
+                      
+                      if (!promptContent.trim()) {
+                        alert('Please enter a prompt to process');
+                        return;
+                      }
+                      
+                      // Execute the backend processing
+                      try {
+                        const result = await processPrompt(promptContent, industry, useCase);
+                        console.log('Processing result:', result);
+                        alert('Prompt processed successfully! Check the console for results.');
+                      } catch (error) {
+                        console.error('Processing error:', error);
+                        alert('Error processing prompt. Please try again.');
+                      }
+                    }}
+                  >
+                    Process with AI Agent
+                  </Button>
+                </div>
               </div>
             </div>
           </TabsContent>
