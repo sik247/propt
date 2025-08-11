@@ -175,7 +175,7 @@ const MainContent = () => {
                 Explore optimized prompts for various AI tools and services.
               </p>
               
-              <div className="grid grid-cols-2 gap-4 mt-6">
+              <div className="grid grid-cols-3 gap-4 mt-6">
                 {[
                   "Cluely",
                   "Cursor Prompts", 
@@ -186,14 +186,17 @@ const MainContent = () => {
                   "Lovable",
                   "Manus Agent Tools & Prompt",
                   "Open Source prompts",
+                  "Orchids.app",
                   "Perplexity",
                   "Replit",
                   "Same.dev",
                   "Spawn",
                   "Trae",
                   "v0 Prompts and Tools",
+                  "VSCode Agent",
                   "Warp.dev",
                   "Windsurf",
+                  "Xcode",
                   "Z.ai Code"
                 ].map((service) => (
                   <Button

@@ -14,14 +14,17 @@ const Sidebar = () => {
     { name: "Lovable", file: "Agent Tools.json", time: "2 weeks ago", type: "folder" },
     { name: "Manus Agent Tools & Prompt", file: "Prompt.txt", time: "5 months ago", type: "folder" },
     { name: "Open Source prompts", file: "Prompt.txt", time: "2 weeks ago", type: "folder" },
+    { name: "Orchids.app", file: "Decision-making prompt.txt", time: "2 weeks ago", type: "folder" },
     { name: "Perplexity", file: "Prompt.txt", time: "2 months ago", type: "folder" },
     { name: "Replit", file: "Prompt.txt", time: "2 weeks ago", type: "folder" },
     { name: "Same.dev", file: "Prompt.txt", time: "last month", type: "folder" },
     { name: "Spawn", file: "Prompt.txt", time: "2 weeks ago", type: "folder" },
     { name: "Trae", file: "Prompt.txt", time: "3 months ago", type: "folder" },
     { name: "v0 Prompts and Tools", file: "Prompt.txt", time: "2 weeks ago", type: "folder" },
+    { name: "VSCode Agent", file: "Prompt.txt", time: "4 months ago", type: "folder" },
     { name: "Warp.dev", file: "Prompt.txt", time: "last month", type: "folder" },
     { name: "Windsurf", file: "Prompt.txt", time: "2 weeks ago", type: "folder" },
+    { name: "Xcode", file: "prompts", time: "last month", type: "folder" },
     { name: "Z.ai Code", file: "prompt.txt", time: "last week", type: "folder" }
   ];
 
