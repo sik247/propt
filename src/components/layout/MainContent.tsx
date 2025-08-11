@@ -237,12 +237,35 @@ const MainContent = () => {
                   Supports .md, .txt files up to 10MB
                 </p>
                 <div className="space-y-3">
-                  <Button className="bg-primary hover:bg-primary/90">
+                  <input
+                    type="file"
+                    accept=".md,.txt"
+                    id="file-upload"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          const content = event.target?.result as string;
+                          const promptTextarea = document.getElementById('prompt-input') as HTMLTextAreaElement;
+                          if (promptTextarea) {
+                            promptTextarea.value = content;
+                          }
+                        };
+                        reader.readAsText(file);
+                      }
+                    }}
+                  />
+                  <Button 
+                    className="bg-primary hover:bg-primary/90"
+                    onClick={() => document.getElementById('file-upload')?.click()}
+                  >
                     Choose Files
                   </Button>
                   <div className="text-sm text-muted-foreground">or</div>
                   <Button 
-                    className="bg-primary hover:bg-primary/90 w-full"
+                    className="bg-primary hover:bg-primary/90 w-full text-lg font-bold py-4"
                     onClick={async () => {
                       // Get form data
                       const industry = (document.getElementById('industry') as HTMLInputElement)?.value || 'general';
@@ -250,27 +273,30 @@ const MainContent = () => {
                       const promptContent = (document.getElementById('prompt-input') as HTMLTextAreaElement)?.value || '';
                       
                       if (!promptContent.trim()) {
-                        alert('Please enter a prompt to process');
+                        alert('Please enter a prompt or upload a .md file to process');
                         return;
                       }
                       
-                      // Execute the backend processing
+                      // Execute the backend main.py processing
                       try {
                         const result = await processPrompt(promptContent, industry, useCase);
-                        console.log('Processing result:', result);
-                        alert(`Prompt processed successfully! 
+                        console.log('Propt! Processing result:', result);
+                        alert(`Propt! Analysis Complete! ✨
                         
-Command: ${result.command}
-Analysis: ${JSON.stringify(result.analysis, null, 2)}
-                        
-Check the console for full results.`);
+Backend Command: ${result.command}
+
+Analysis Results:
+• Word Count: ${result.analysis.word_count}
+• Has Examples: ${result.analysis.has_examples ? 'Yes' : 'No'}
+
+Check the console for full processing details.`);
                       } catch (error) {
-                        console.error('Processing error:', error);
-                        alert('Error processing prompt. Please try again.');
+                        console.error('Propt! Processing error:', error);
+                        alert('Error running Propt! Please try again.');
                       }
                     }}
                   >
-                    Process with AI Agent
+                    Propt! 🚀
                   </Button>
                 </div>
               </div>
