@@ -4,6 +4,63 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, Upload } from "lucide-react";
 
+// Function to open a prompt from the sample_prompts directory
+const openPrompt = async (companyName: string) => {
+  try {
+    // In a real implementation, this would fetch the actual prompt file
+    // For now, we'll simulate loading from propt/backend/sample_prompts
+    const promptContent = `This would load the actual prompt content from:
+propt/backend/sample_prompts/${companyName}/Prompt.txt
+
+[${companyName} Template]
+Sample prompt content for ${companyName} would appear here.`;
+    
+    // Set the prompt content in the textarea for Upload & Refine tab
+    const promptTextarea = document.getElementById('prompt-input') as HTMLTextAreaElement;
+    if (promptTextarea) {
+      promptTextarea.value = promptContent;
+      
+      // Switch to Upload & Refine tab
+      const uploadTab = document.querySelector('[value="upload"]') as HTMLElement;
+      if (uploadTab) {
+        uploadTab.click();
+      }
+      
+      alert(`Loaded ${companyName} prompt template into the Upload & Refine section!`);
+    } else {
+      alert(`${companyName} prompt would be loaded from: propt/backend/sample_prompts/${companyName}/`);
+    }
+    
+  } catch (error) {
+    console.error('Error opening prompt:', error);
+    alert('Error loading prompt. Please try again.');
+  }
+};
+
+// Function to process prompts using the backend
+const processPrompt = async (content: string, industry: string, useCase: string) => {
+  try {
+    // Fallback: show the backend command that would be executed
+    const command = `cd propt/backend && python3 main.py "${content}" --industry "${industry}" --use-case "${useCase}"`;
+    console.log('Backend command would be:', command);
+    
+    // Return simulated result for demo purposes
+    return {
+      success: true,
+      message: 'Prompt processing simulated. The backend would be executed with the command above.',
+      command: command,
+      analysis: {
+        word_count: content.split(' ').length,
+        has_examples: content.toLowerCase().includes('example'),
+        recommendations: ['Add more structure', 'Include examples', 'Define clear objectives']
+      }
+    };
+  } catch (error) {
+    console.error('Processing error:', error);
+    throw error;
+  }
+};
+
 const MainContent = () => {
   return (
     <div className="flex-1 flex flex-col h-screen bg-background">
@@ -120,19 +177,30 @@ const MainContent = () => {
               
               <div className="grid grid-cols-2 gap-4 mt-6">
                 {[
-                  "Manus Agent Tools",
-                  "Devin AI Prompts", 
-                  "Z.ai Code Templates",
-                  "Trae Workflows",
-                  "Perplexity Queries",
-                  "Cluely Prompts",
-                  "Kiro Templates",
-                  "Replit Snippets"
+                  "Cluely",
+                  "Cursor Prompts", 
+                  "Devin AI",
+                  "dia",
+                  "Junie",
+                  "Kiro",
+                  "Lovable",
+                  "Manus Agent Tools & Prompt",
+                  "Open Source prompts",
+                  "Perplexity",
+                  "Replit",
+                  "Same.dev",
+                  "Spawn",
+                  "Trae",
+                  "v0 Prompts and Tools",
+                  "Warp.dev",
+                  "Windsurf",
+                  "Z.ai Code"
                 ].map((service) => (
                   <Button
                     key={service}
                     variant="outline"
                     className="h-20 flex flex-col items-center justify-center gap-2 text-foreground border-border hover:bg-muted"
+                    onClick={() => openPrompt(service)}
                   >
                     <FileText className="w-6 h-6" />
                     <span className="text-sm">{service}</span>
@@ -149,15 +217,59 @@ const MainContent = () => {
                 Upload your prompt files and let our AI refine them for optimal performance.
               </p>
               
-              <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
+              {/* Prompt Input Area */}
+              <div className="space-y-4 mb-6">
+                <Label htmlFor="prompt-input" className="text-foreground text-lg font-medium">Enter Your Prompt</Label>
+                <textarea 
+                  id="prompt-input"
+                  placeholder="Enter your prompt here to be processed by our AI agent..."
+                  className="w-full h-32 px-3 py-2 rounded-md border border-border bg-input text-foreground placeholder:text-muted-foreground resize-none"
+                />
+              </div>
+              
+                              <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
                 <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
                 <p className="text-foreground font-medium mb-2">Drop your files here</p>
                 <p className="text-sm text-muted-foreground mb-4">
                   Supports .md, .txt files up to 10MB
                 </p>
-                <Button className="bg-primary hover:bg-primary/90">
-                  Choose Files
-                </Button>
+                <div className="space-y-3">
+                  <Button className="bg-primary hover:bg-primary/90">
+                    Choose Files
+                  </Button>
+                  <div className="text-sm text-muted-foreground">or</div>
+                  <Button 
+                    className="bg-primary hover:bg-primary/90 w-full"
+                    onClick={async () => {
+                      // Get form data
+                      const industry = (document.getElementById('industry') as HTMLInputElement)?.value || 'general';
+                      const useCase = (document.getElementById('usecase') as HTMLInputElement)?.value || 'general';
+                      const promptContent = (document.getElementById('prompt-input') as HTMLTextAreaElement)?.value || '';
+                      
+                      if (!promptContent.trim()) {
+                        alert('Please enter a prompt to process');
+                        return;
+                      }
+                      
+                      // Execute the backend processing
+                      try {
+                        const result = await processPrompt(promptContent, industry, useCase);
+                        console.log('Processing result:', result);
+                        alert(`Prompt processed successfully! 
+                        
+Command: ${result.command}
+Analysis: ${JSON.stringify(result.analysis, null, 2)}
+                        
+Check the console for full results.`);
+                      } catch (error) {
+                        console.error('Processing error:', error);
+                        alert('Error processing prompt. Please try again.');
+                      }
+                    }}
+                  >
+                    Process with AI Agent
+                  </Button>
+                </div>
               </div>
             </div>
           </TabsContent>
