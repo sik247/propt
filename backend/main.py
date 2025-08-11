@@ -154,42 +154,35 @@ async def revise_prompt(request: PromptRequest):
 async def analyze_prompt_unified(request: PromptRequest):
     """Run unified prompt analysis pipeline: extract, critique, and revise."""
     try:
-        # Initialize runner and agents
+        # Initialize the main runner with agents
         runner = Runner()
         
-        # Create and add agents
+        # Create and add agents using your original structure
         extractor = create_instruction_extractor()
-        critic = create_prompt_critic()
+        critic = create_prompt_critic()  
         reviser = create_prompt_reviser()
         
         runner.add_agent(extractor)
         runner.add_agent(critic)
         runner.add_agent(reviser)
         
-        # Define pipeline configuration
-        pipeline_config = [
-            {
-                "agent": "instruction_extractor",
-                "response_format": InstructionList
-            },
-            {
-                "agent": "prompt_critic", 
-                "response_format": CritiqueIssues
-            },
-            {
-                "agent": "prompt_reviser",
-                "response_format": RevisedPromptOutput
-            }
-        ]
+        # Run the three-step analysis pipeline
+        # Step 1: Extract instructions
+        extract_result = runner.run_agent("instruction_extractor", request.prompt, InstructionList)
         
-        # Run the pipeline
-        pipeline_result = runner.run_pipeline(pipeline_config, request.prompt)
+        # Step 2: Critique the prompt
+        critique_result = runner.run_agent("prompt_critic", request.prompt, CritiqueIssues)
         
-        if not pipeline_result["success"]:
-            raise HTTPException(status_code=500, detail=pipeline_result["error"])
+        # Step 3: Revise the prompt (using original prompt for context)
+        revise_result = runner.run_agent("prompt_reviser", request.prompt, RevisedPromptOutput)
         
-        # Process results
-        results = pipeline_result["results"]
+        # Check if all steps succeeded
+        if not (extract_result["success"] and critique_result["success"] and revise_result["success"]):
+            failed_steps = []
+            if not extract_result["success"]: failed_steps.append("extraction")
+            if not critique_result["success"]: failed_steps.append("critique") 
+            if not revise_result["success"]: failed_steps.append("revision")
+            raise HTTPException(status_code=500, detail=f"Analysis failed at: {', '.join(failed_steps)}")
         
         # Format the unified response
         formatted_data = {
@@ -199,29 +192,26 @@ async def analyze_prompt_unified(request: PromptRequest):
             "analysis_complete": True
         }
         
-        # Extract data from each step
-        if len(results) >= 1 and results[0]["success"]:
-            if hasattr(results[0]["data"], 'instructions'):
-                formatted_data["instructions"] = [inst.dict() for inst in results[0]["data"].instructions]
-            elif isinstance(results[0]["data"], list):
-                formatted_data["instructions"] = results[0]["data"]
+        # Process extraction results
+        if hasattr(extract_result["data"], 'instructions'):
+            formatted_data["instructions"] = [inst.dict() for inst in extract_result["data"].instructions]
         
-        if len(results) >= 2 and results[1]["success"]:
-            if hasattr(results[1]["data"], 'issues'):
-                formatted_data["issues"] = [issue.dict() for issue in results[1]["data"].issues]
-            elif isinstance(results[1]["data"], list):
-                formatted_data["issues"] = results[1]["data"]
+        # Process critique results  
+        if hasattr(critique_result["data"], 'issues'):
+            formatted_data["issues"] = [issue.dict() for issue in critique_result["data"].issues]
         
-        if len(results) >= 3 and results[2]["success"]:
-            if hasattr(results[2]["data"], 'value'):
-                formatted_data["revised_prompt"] = results[2]["data"].value
-            elif isinstance(results[2]["data"], str):
-                formatted_data["revised_prompt"] = results[2]["data"]
+        # Process revision results
+        if hasattr(revise_result["data"], 'value'):
+            formatted_data["revised_prompt"] = revise_result["data"].value
         
         return UnifiedAnalysisResponse(
             result="success",
             data=formatted_data,
-            pipeline_results=[{"step": i+1, "success": r["success"], "agent": ["extractor", "critic", "reviser"][i]} for i, r in enumerate(results)]
+            pipeline_results=[
+                {"step": 1, "success": extract_result["success"], "agent": "instruction_extractor"},
+                {"step": 2, "success": critique_result["success"], "agent": "prompt_critic"},
+                {"step": 3, "success": revise_result["success"], "agent": "prompt_reviser"}
+            ]
         )
         
     except Exception as e:

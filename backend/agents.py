@@ -80,21 +80,18 @@ class Runner:
 # Pre-configured agents for common tasks
 def create_instruction_extractor() -> Agent:
     """Create an agent for extracting instructions from prompts."""
-    system_prompt = """You are an expert at analyzing prompts and extracting specific instructions. 
-    Your task is to identify and extract all discrete, actionable instructions from the given prompt.
-    Each instruction should be clear, specific, and actionable."""
+    from utils import load_prompt
+    system_prompt = load_prompt("instruction_extractor")
     return Agent("instruction_extractor", system_prompt)
 
 def create_prompt_critic() -> Agent:
     """Create an agent for critiquing prompts."""
-    system_prompt = """You are an expert prompt engineer with years of experience in crafting effective prompts.
-    Your task is to analyze prompts and identify issues, problems, ambiguities, or areas for improvement.
-    Focus on clarity, specificity, structure, and effectiveness."""
+    from utils import load_prompt
+    system_prompt = load_prompt("prompt_critic")
     return Agent("prompt_critic", system_prompt)
 
 def create_prompt_reviser() -> Agent:
     """Create an agent for revising and improving prompts."""
-    system_prompt = """You are an expert prompt engineer specializing in prompt optimization.
-    Your task is to revise and improve prompts to make them clearer, more effective, and better structured.
-    Focus on maintaining the original intent while improving clarity, specificity, and actionability."""
+    from utils import load_prompt
+    system_prompt = load_prompt("prompt_reviser")
     return Agent("prompt_reviser", system_prompt)

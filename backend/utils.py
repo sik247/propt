@@ -1,7 +1,7 @@
 import os
 from typing import Dict, Any, Optional
 
-def load_prompt(prompt_name: str, prompts_dir: str = "prompts") -> str:
+def load_prompt(prompt_name: str, prompts_dir: str = "agent_prompts") -> str:
     """Load a prompt from a file in the prompts directory."""
     try:
         prompt_path = os.path.join(prompts_dir, f"{prompt_name}.txt")
