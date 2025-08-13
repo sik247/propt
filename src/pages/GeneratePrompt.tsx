@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, Sparkles, CheckCircle } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, CheckCircle, FileText } from "lucide-react";
 
 const GeneratePrompt = () => {
   const navigate = useNavigate();
