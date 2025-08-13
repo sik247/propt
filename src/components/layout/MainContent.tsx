@@ -2,14 +2,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Upload } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FileText, Upload, Loader2, CheckCircle, XCircle, Sparkles, Plus, ChevronDown, ChevronUp } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { toast } from "sonner";
 
 // Function to process prompts using the backend
 const processPrompt = async (content: string, industry: string, useCase: string) => {
-  // For now, simulate the backend call by executing the Python script
-  // In a real implementation, this would be an API call
   try {
-    const response = await fetch('/api/process-prompt', {
+    // Call the Flask backend API
+    const response = await fetch('http://localhost:5001/api/process-prompt', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -18,35 +21,73 @@ const processPrompt = async (content: string, industry: string, useCase: string)
         content,
         industry,
         use_case: useCase,
-        company: 'generic'
       }),
     });
     
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
     }
     
     return await response.json();
   } catch (error) {
-    // Fallback: show the backend command that would be executed
-    const command = `cd backend && python3 main.py "${content}" --industry "${industry}" --use-case "${useCase}"`;
-    console.log('Backend command would be:', command);
-    
-    // Return simulated result for demo purposes
-    return {
-      success: true,
-      message: 'Prompt processing simulated. In production, this would call the backend API.',
-      command: command,
-      analysis: {
-        word_count: content.split(' ').length,
-        has_examples: content.toLowerCase().includes('example'),
-        recommendations: ['Add more structure', 'Include examples', 'Define clear objectives']
-      }
-    };
+    console.error('Backend processing error:', error);
+    throw error;
   }
 };
 
 const MainContent = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processResult, setProcessResult] = useState<any>(null);
+  const [promptValue, setPromptValue] = useState("");
+  const [industryValue, setIndustryValue] = useState("finance");
+  const [usecaseValue, setUsecaseValue] = useState("report generation");
+  const [showTopServices, setShowTopServices] = useState(false);
+
+  // Handle prompt passed from Generate page
+  useEffect(() => {
+    if (location.state?.promptToRefine) {
+      setPromptValue(location.state.promptToRefine);
+      toast.success("Prompt loaded for refinement!");
+    }
+  }, [location.state]);
+
+  const handleNavigateToGenerate = () => {
+    navigate('/generate');
+  };
+
+  const handleProcessPrompt = async () => {
+    if (!promptValue.trim()) {
+      toast.error('Please enter a prompt to process');
+      return;
+    }
+
+    setIsProcessing(true);
+    setProcessResult(null);
+
+    try {
+      const result = await processPrompt(promptValue, industryValue, usecaseValue);
+      setProcessResult(result);
+      
+      if (result.success) {
+        toast.success('Prompt refined successfully!');
+      } else {
+        toast.error(`Refinement failed: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Processing error:', error);
+      toast.error(`Error refining prompt: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setProcessResult({
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col h-screen bg-background">
       {/* Header */}
@@ -73,7 +114,8 @@ const MainContent = () => {
                 id="industry"
                 placeholder="e.g., finance"
                 className="bg-input border-border text-foreground"
-                defaultValue="finance"
+                value={industryValue}
+                onChange={(e) => setIndustryValue(e.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -82,7 +124,8 @@ const MainContent = () => {
                 id="usecase"
                 placeholder="e.g., report generation"
                 className="bg-input border-border text-foreground"
-                defaultValue="report generation"
+                value={usecaseValue}
+                onChange={(e) => setUsecaseValue(e.target.value)}
               />
             </div>
           </div>
@@ -154,42 +197,98 @@ const MainContent = () => {
           </TabsContent>
           
           <TabsContent value="browse" className="mt-6">
-            <div className="space-y-4">
-              <h3 className="text-xl font-semibold text-foreground">Browse AI Service Prompts</h3>
-              <p className="text-muted-foreground">
-                Explore optimized prompts for various AI tools and services.
-              </p>
-              
-              <div className="grid grid-cols-2 gap-4 mt-6">
-                {[
-                  "Cluely",
-                  "Cursor Prompts",
-                  "Devin AI",
-                  "Junie",
-                  "Kiro",
-                  "Lovable",
-                  "Manus Agent Tools & Prompt",
-                  "Open Source prompts",
-                  "Perplexity",
-                  "Replit",
-                  "Same.dev",
-                  "Spawn",
-                  "Trae",
-                  "v0 Prompts and Tools",
-                  "Warp.dev",
-                  "Windsurf",
-                  "Z.ai Code",
-                  "dia"
-                ].map((service) => (
+            <div className="space-y-6">
+              <div className="text-center">
+                <h3 className="text-xl font-semibold text-foreground">Browse AI Service Prompts</h3>
+                <p className="text-muted-foreground">
+                  Explore and discover prompts from top AI tools and services
+                </p>
+              </div>
+
+              {/* AI Coding Assistants */}
+              <div className="space-y-4">
+                <h4 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                  💻 AI Coding Assistants
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {["Cursor Prompts", "Devin AI", "Windsurf", "Z.ai Code"].map((service) => (
+                    <div
+                      key={service}
+                      className="h-20 flex flex-col items-center justify-center gap-2 p-4 border border-border rounded-lg bg-card hover:bg-muted/50 transition-colors"
+                    >
+                      <FileText className="w-6 h-6 text-blue-600" />
+                      <span className="text-sm text-center font-medium">{service}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Conversational AI */}
+              <div className="space-y-4">
+                <h4 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                  💬 Conversational AI
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {["Cluely", "Perplexity", "Junie", "Kiro"].map((service) => (
+                    <div
+                      key={service}
+                      className="h-20 flex flex-col items-center justify-center gap-2 p-4 border border-border rounded-lg bg-card hover:bg-muted/50 transition-colors"
+                    >
+                      <FileText className="w-6 h-6 text-green-600" />
+                      <span className="text-sm text-center font-medium">{service}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Development Platforms */}
+              <div className="space-y-4">
+                <h4 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                  🚀 Development Platforms
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {["Lovable", "Replit", "v0 Prompts and Tools", "Warp.dev"].map((service) => (
+                    <div
+                      key={service}
+                      className="h-20 flex flex-col items-center justify-center gap-2 p-4 border border-border rounded-lg bg-card hover:bg-muted/50 transition-colors"
+                    >
+                      <FileText className="w-6 h-6 text-purple-600" />
+                      <span className="text-sm text-center font-medium">{service}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Community & Tools */}
+              <div className="space-y-4">
+                <h4 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                  🛠️ Community & Tools
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {["Open Source prompts", "Manus Agent Tools & Prompt", "Same.dev", "dia"].map((service) => (
+                    <div
+                      key={service}
+                      className="h-20 flex flex-col items-center justify-center gap-2 p-4 border border-border rounded-lg bg-card hover:bg-muted/50 transition-colors"
+                    >
+                      <FileText className="w-6 h-6 text-orange-600" />
+                      <span className="text-sm text-center font-medium">{service}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="text-center pt-4 border-t">
+                <p className="text-sm text-muted-foreground">
+                  Browse and discover different prompt styles and approaches. To load and use prompts, visit the{" "}
                   <Button
-                    key={service}
-                    variant="outline"
-                    className="h-20 flex flex-col items-center justify-center gap-2 text-foreground border-border hover:bg-muted"
+                    variant="link"
+                    className="h-auto p-0 text-blue-600 underline"
+                    onClick={handleNavigateToGenerate}
                   >
-                    <FileText className="w-6 h-6" />
-                    <span className="text-sm">{service}</span>
-                  </Button>
-                ))}
+                    Generate New Prompt
+                  </Button>{" "}
+                  page.
+                </p>
               </div>
             </div>
           </TabsContent>
@@ -201,6 +300,61 @@ const MainContent = () => {
                 Upload your prompt files and let our AI refine them for optimal performance.
               </p>
               
+              {/* Top Services Toggle Section */}
+              <div className="space-y-4 mb-6">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowTopServices(!showTopServices)}
+                  className="w-full flex items-center justify-between"
+                >
+                  <span>Load from Top AI Services</span>
+                  {showTopServices ? (
+                    <ChevronUp className="w-4 h-4" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4" />
+                  )}
+                </Button>
+                
+                {showTopServices && (
+                  <div className="p-4 border border-border rounded-lg bg-muted/20">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                      {[
+                        "Claude", "ChatGPT", "Perplexity", "Cursor Prompts", 
+                        "Devin AI", "Replit", "Lovable", "Open Source prompts"
+                      ].map((service) => (
+                        <Button
+                          key={service}
+                          variant="outline"
+                          size="sm"
+                          className="h-16 flex flex-col items-center justify-center gap-1 text-foreground border-border hover:bg-muted"
+                          onClick={async () => {
+                            try {
+                              const response = await fetch(`http://localhost:5001/api/load-prompt/${encodeURIComponent(service)}`);
+                              if (response.ok) {
+                                const data = await response.json();
+                                setPromptValue(data.content);
+                                toast.success(`Loaded ${service} prompt`);
+                                setShowTopServices(false); // Collapse after loading
+                              } else {
+                                toast.error(`Failed to load ${service} prompt`);
+                              }
+                            } catch (error) {
+                              toast.error(`Error loading ${service} prompt`);
+                            }
+                          }}
+                        >
+                          <FileText className="w-4 h-4" />
+                          <span className="text-xs text-center">{service}</span>
+                        </Button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground text-center">
+                      Click any service to load their prompt into the editor below
+                    </p>
+                  </div>
+                )}
+              </div>
+
               {/* Prompt Input Area */}
               <div className="space-y-4 mb-6">
                 <Label htmlFor="prompt-input" className="text-foreground text-lg font-medium">Enter Your Prompt</Label>
@@ -208,6 +362,9 @@ const MainContent = () => {
                   id="prompt-input"
                   placeholder="Enter your prompt here to be processed by our AI agent..."
                   className="w-full h-32 px-3 py-2 rounded-md border border-border bg-input text-foreground placeholder:text-muted-foreground resize-none"
+                  value={promptValue}
+                  onChange={(e) => setPromptValue(e.target.value)}
+                  disabled={isProcessing}
                 />
               </div>
               
@@ -222,34 +379,82 @@ const MainContent = () => {
                     Choose Files
                   </Button>
                   <div className="text-sm text-muted-foreground">or</div>
-                  <Button 
-                    className="bg-primary hover:bg-primary/90 w-full"
-                    onClick={async () => {
-                      // Get form data
-                      const industry = (document.getElementById('industry') as HTMLInputElement)?.value || 'general';
-                      const useCase = (document.getElementById('usecase') as HTMLInputElement)?.value || 'general';
-                      const promptContent = (document.getElementById('prompt-input') as HTMLTextAreaElement)?.value || '';
-                      
-                      if (!promptContent.trim()) {
-                        alert('Please enter a prompt to process');
-                        return;
-                      }
-                      
-                      // Execute the backend processing
-                      try {
-                        const result = await processPrompt(promptContent, industry, useCase);
-                        console.log('Processing result:', result);
-                        alert('Prompt processed successfully! Check the console for results.');
-                      } catch (error) {
-                        console.error('Processing error:', error);
-                        alert('Error processing prompt. Please try again.');
-                      }
-                    }}
-                  >
-                    Process with AI Agent
-                  </Button>
+                  <div className="space-y-3">
+                    <Button 
+                      className="bg-blue-600 hover:bg-blue-700 w-full"
+                      onClick={handleNavigateToGenerate}
+                    >
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Generate New Prompt
+                    </Button>
+                    
+                    <Button 
+                      className="bg-primary hover:bg-primary/90 w-full"
+                      onClick={handleProcessPrompt}
+                      disabled={isProcessing || !promptValue.trim()}
+                    >
+                      {isProcessing ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Refining...
+                        </>
+                      ) : (
+                        "Refine with 5-Step Pipeline"
+                      )}
+                    </Button>
+                  </div>
                 </div>
               </div>
+
+              {/* Results Section */}
+              {processResult && (
+                <div className="mt-8 space-y-4">
+                  <h4 className="text-lg font-medium text-foreground">Processing Results</h4>
+                  
+                  {processResult.success ? (
+                    <Card className="bg-green-50 border-green-200">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center gap-2 text-green-800">
+                          <CheckCircle className="w-5 h-5" />
+                          Prompt Successfully Refined
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div>
+                          <Label className="text-sm font-medium text-green-800">Original Prompt:</Label>
+                          <div className="mt-1 p-3 bg-white rounded border text-sm">
+                            {processResult.original_prompt}
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium text-green-800">Refined Prompt:</Label>
+                          <div className="mt-1 p-3 bg-white rounded border text-sm whitespace-pre-wrap">
+                            {processResult.processed_prompt}
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 text-xs text-green-700">
+                          <div><span className="font-medium">Method:</span> {processResult.method || '5-Step Agent Pipeline'}</div>
+                          <div><span className="font-medium">Industry:</span> {processResult.industry}</div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <Card className="bg-red-50 border-red-200">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="flex items-center gap-2 text-red-800">
+                          <XCircle className="w-5 h-5" />
+                          Processing Failed
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-red-700 text-sm">
+                          {processResult.error || 'An unknown error occurred during processing.'}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              )}
             </div>
           </TabsContent>
 
