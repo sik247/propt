@@ -11,52 +11,111 @@ const BrowsePrompts = () => {
   const [selectedPrompt, setSelectedPrompt] = useState<any>(null);
 
   const categories = [
-    { id: "all", name: "All Prompts", count: 25 },
-    { id: "coding", name: "AI Coding Assistants", count: 8 },
-    { id: "conversational", name: "Conversational AI", count: 6 },
-    { id: "development", name: "Development Platforms", count: 7 },
-    { id: "community", name: "Community & Tools", count: 4 }
+    { id: "all", name: "All Prompts", count: 10 },
+    { id: "coding", name: "AI Coding Assistants", count: 6 },
+    { id: "conversational", name: "Conversational AI", count: 2 },
+    { id: "development", name: "Development Platforms", count: 4 }
   ];
 
   const prompts = [
     {
       id: 1,
-      name: "Cursor Prompts",
+      name: "Devin AI",
       category: "coding",
-      description: "Advanced code completion and generation prompts for Cursor IDE",
-      file: "Agent Prompt v1.2.txt",
-      content: "You are an AI assistant specialized in helping developers write, debug, and optimize code...",
-      tags: ["coding", "IDE", "completion"],
-      lastUpdated: "3 weeks ago"
+      description: "A software engineer using a real computer operating system, specialized in understanding codebases and writing functional code",
+      file: "Prompt.txt",
+      content: "You are Devin, a software engineer using a real computer operating system. You are a real code-wiz: few programmers are as talented as you at understanding codebases, writing functional and clean code, and iterating on your changes until they are correct...",
+      tags: ["coding", "software-engineering", "codebase"],
+      lastUpdated: "2 months ago"
     },
     {
       id: 2,
-      name: "Claude Assistant",
-      category: "conversational",
-      description: "Anthropic's Claude optimized for helpful, harmless, and honest responses",
-      file: "Claude Prompt.txt",
-      content: "I'm Claude, an AI assistant created by Anthropic. I'm designed to be helpful, harmless, and honest...",
-      tags: ["conversation", "assistant", "general"],
-      lastUpdated: "1 week ago"
+      name: "Cursor Agent v1.2",
+      category: "coding",
+      description: "AI coding assistant powered by GPT-4, specialized in pair programming and code completion",
+      file: "Agent Prompt v1.2.txt",
+      content: "You are an AI coding assistant, powered by GPT-4.1. You operate in Cursor. You are pair programming with a USER to solve their coding task...",
+      tags: ["coding", "IDE", "completion", "pair-programming"],
+      lastUpdated: "1 month ago"
     },
     {
       id: 3,
-      name: "Lovable Agent",
+      name: "Lovable",
       category: "development",
-      description: "Specialized prompt for web development and React applications",
-      file: "Agent Tools.json",
-      content: "You are Lovable, an AI editor that creates and modifies web applications...",
-      tags: ["web-dev", "react", "frontend"],
-      lastUpdated: "2 weeks ago"
+      description: "AI editor that creates and modifies web applications with React, TypeScript, and modern tools",
+      file: "Prompt.txt",
+      content: "You are Lovable, an AI editor that creates and modifies web applications. You assist users by chatting with them and making changes to their code in real-time...",
+      tags: ["web-dev", "react", "frontend", "typescript"],
+      lastUpdated: "1 week ago"
     },
     {
       id: 4,
-      name: "Perplexity Search",
+      name: "Perplexity",
       category: "conversational",
-      description: "Research and search-oriented prompt for information gathering",
+      description: "Helpful search assistant trained to provide accurate, detailed answers using search results",
       file: "Prompt.txt",
-      content: "You are a helpful AI assistant that provides accurate, up-to-date information...",
-      tags: ["search", "research", "information"],
+      content: "You are Perplexity, a helpful search assistant trained by Perplexity AI. Your goal is to write an accurate, detailed, and comprehensive answer to the Query...",
+      tags: ["search", "research", "information", "AI-assistant"],
+      lastUpdated: "2 months ago"
+    },
+    {
+      id: 5,
+      name: "Manus Agent",
+      category: "development",
+      description: "AI agent specialized in information gathering, data processing, and creating applications",
+      file: "Agent loop.txt",
+      content: "You are Manus, an AI agent created by the Manus team. You excel at information gathering, fact-checking, documentation, data processing, analysis, and visualization...",
+      tags: ["development", "data-processing", "documentation", "analysis"],
+      lastUpdated: "3 weeks ago"
+    },
+    {
+      id: 6,
+      name: "Replit Agent",
+      category: "development",
+      description: "Coding assistant for the Replit development environment",
+      file: "Prompt.txt",
+      content: "You are a helpful coding assistant created by Replit...",
+      tags: ["coding", "replit", "development", "assistant"],
+      lastUpdated: "2 months ago"
+    },
+    {
+      id: 7,
+      name: "Windsurf Wave 11",
+      category: "coding",
+      description: "Advanced AI coding assistant with comprehensive development capabilities",
+      file: "Prompt Wave 11.txt",
+      content: "You are Windsurf, an advanced AI coding assistant...",
+      tags: ["coding", "development", "AI-assistant", "comprehensive"],
+      lastUpdated: "1 month ago"
+    },
+    {
+      id: 8,
+      name: "Claude (Anthropic)",
+      category: "conversational",
+      description: "AI assistant focused on being helpful, harmless, and honest",
+      file: "Chat Prompt.txt",
+      content: "I'm Claude, an AI assistant created by Anthropic. I'm designed to be helpful, harmless, and honest...",
+      tags: ["conversation", "assistant", "general", "anthropic"],
+      lastUpdated: "1 month ago"
+    },
+    {
+      id: 9,
+      name: "Bolt (Open Source)",
+      category: "development",
+      description: "Open source AI coding assistant for rapid development",
+      file: "Prompt.txt",
+      content: "You are Bolt, an open source AI coding assistant...",
+      tags: ["open-source", "coding", "development", "rapid"],
+      lastUpdated: "2 months ago"
+    },
+    {
+      id: 10,
+      name: "Cline",
+      category: "coding",
+      description: "Open source coding assistant with autonomous capabilities",
+      file: "Prompt.txt",
+      content: "You are Cline, an autonomous coding assistant...",
+      tags: ["open-source", "coding", "autonomous", "assistant"],
       lastUpdated: "2 months ago"
     }
   ];
