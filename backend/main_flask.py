@@ -4,21 +4,21 @@ from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any
 from openai import OpenAI
-# Use OpenAI-based agents to avoid mutex lock issues
 from agents import Agent, Runner
-print("✅ Using OpenAI-based agents implementation!")
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from utils import load_prompt  # now does templating via string.Template
 
 load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
-CORS(app)  # Enable CORS for frontend integration
+CORS(app)
+
+# Initialize OpenAI client
+client = OpenAI(api_key = os.getenv("OPENAI_API_KEY"))
 
 # -----------------------------------
-# 1) Pydantic models (output schemas)
+# Pydantic models (output schemas)
 # -----------------------------------
 class Instruction(BaseModel):
     instruction_title: str = Field(description="A 2-8 word title of the instruction.")
@@ -28,10 +28,10 @@ class InstructionList(BaseModel):
     instructions: List[Instruction]
 
 class CritiqueIssue(BaseModel):
-    issue:       str
-    snippet:     str
+    issue: str
+    snippet: str
     explanation: str
-    suggestion:  str
+    suggestion: str
 
 class CritiqueIssues(BaseModel):
     issues: List[CritiqueIssue]
@@ -41,20 +41,14 @@ class RevisedPromptOutput(BaseModel):
     class Config:
         extra = "forbid"
 
+
+class GenereatedPrompt(BaseModel):
+    planning:str
+    final_prompt: str
+    considerations: str
 # -----------------------------------
-# 2) Load .env & set API key
+# Utility Functions
 # -----------------------------------
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-load_dotenv(os.path.join(SCRIPT_DIR, ".env"))
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-def list_tools(base_path="sample_prompts"):
-    return [name for name in os.listdir(base_path) if os.path.isdir(os.path.join(base_path, name))]
-
-def list_prompts(tool_name, base_path="sample_prompts"):
-    tool_path = os.path.join(base_path, tool_name)
-    return [f for f in os.listdir(tool_path) if os.path.isfile(os.path.join(tool_path, f))]
-
 def load_prompt(tool_name, prompt_file=None, base_path="sample_prompts", **kwargs):
     if prompt_file is None:
         path = tool_name
@@ -69,7 +63,30 @@ def load_prompt(tool_name, prompt_file=None, base_path="sample_prompts", **kwarg
             pass
     return content
 
-def make_main_agent(industry, usecase):
+# -----------------------------------
+# Core Agent Functions
+# -----------------------------------
+def make_prompt_agent(industry, usecase):
+    
+    # Load the prompt generation template with placeholders filled
+    generate_prompt_template = load_prompt("prompts/generate_prompt.md")
+    filled_prompt = generate_prompt_template.format(industry=industry, usecase=usecase)
+    
+    response = client.responses.parse(
+        model="gpt-5",
+        input=filled_prompt,
+        tools=[{"type": "web_search_preview"}],
+        reasoning={
+            "effort": "medium"
+        },
+        text_format=GenereatedPrompt
+    )
+    return response.output_parsed
+
+
+
+
+def make_prompt_editing_agent(industry, usecase):
     # Load prompt templates with templating
     original_prompt   = load_prompt("prompts/original_prompt.md", industry=industry, usecase=usecase)
     extraction_prompt = load_prompt("prompts/extraction_prompt.md", industry=industry, usecase=usecase)
@@ -78,7 +95,7 @@ def make_main_agent(industry, usecase):
     revise_prompt     = load_prompt("prompts/revise_prompt.md", industry=industry, usecase=usecase)
     main_prompt       = load_prompt("prompts/main_prompt.md", industry=industry, usecase=usecase)
 
-    MODEL = "gpt-4.1"
+    MODEL = "gpt-5"
 
     search_agent = Agent(
         name="search_agent",
@@ -100,7 +117,7 @@ def make_main_agent(industry, usecase):
     critique_agent = Agent(
         name="critique_agent",
         model=MODEL,
-        instructions=critique_user +critique_prompt,
+        instructions=critique_prompt,
         output_type=CritiqueIssues
     )
     extract_agent = Agent(
@@ -109,8 +126,8 @@ def make_main_agent(industry, usecase):
         instructions=extraction_prompt,
         output_type=InstructionList,
     )
-    main_agent = Agent(
-        name="main_agent",
+    prmopt_editing_agent = Agent(
+        name="prmopt_editing_agent",
         model=MODEL,
         instructions=main_prompt,
         output_type=RevisedPromptOutput,
@@ -133,18 +150,17 @@ def make_main_agent(industry, usecase):
             ),
         ]
     )
-    return main_agent
+    return prmopt_editing_agent
 
-async def process_prompt_with_agent(prompt_content: str, industry: str, usecase: str):
-    """
-    Main processing function that executes the 5-step agent pipeline
-    """
+async def process_prompt_with_agent_thinking(prompt_content: str, industry: str, usecase: str):
+    """Process prompt using the 5-step agent pipeline with sequential thinking"""
     try:
-        # Create the main agent with industry and usecase context
-        main_agent = make_main_agent(industry, usecase)
+        print(f"🚀 Starting 5-step agent pipeline with sequential thinking for {industry} - {usecase}")
         
-        # Execute the main agent with the prompt content using Agentic AI SDK
-        # The main agent will orchestrate the 5-step pipeline automatically
+        # Create the main agent with industry and usecase context
+        main_agent = make_prompt_editing_agent(industry, usecase)
+        
+        # Execute the main agent with sequential thinking
         result = await Runner.run(main_agent, prompt_content)
         
         # Extract the final processed prompt from the result
@@ -155,15 +171,19 @@ async def process_prompt_with_agent(prompt_content: str, industry: str, usecase:
         else:
             final_prompt = str(result)
             
+        print("✅ 5-step pipeline completed successfully!")
+        
         return {
             "success": True,
             "original_prompt": prompt_content,
             "processed_prompt": final_prompt,
             "industry": industry,
-            "usecase": usecase
+            "usecase": usecase,
+            "method": "5-step agent pipeline with sequential thinking"
         }
         
     except Exception as e:
+        print(f"❌ Error in agent pipeline: {e}")
         return {
             "success": False,
             "error": str(e),
@@ -172,10 +192,74 @@ async def process_prompt_with_agent(prompt_content: str, industry: str, usecase:
             "usecase": usecase
         }
 
+# -----------------------------------
+# API Routes
+# -----------------------------------
+@app.route('/api/generate-prompt', methods=['POST'])
+def generate_prompt_api():
+    """
+    API endpoint to generate a new prompt using sequential thinking
+    """
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({"error": "No JSON data provided"}), 400
+            
+        industry = data.get('industry', 'general')
+        usecase = data.get('use_case', 'general')
+        user_context = data.get('context', '')
+        
+        print(f"🎨 Generating prompt for {industry} - {usecase}")
+        
+        # Generate prompt using your GPT-5 settings
+        generated_prompt = make_prompt_agent(industry, usecase)
+        
+        # Parse the structured response if it's a structured output
+        try:
+            # If generated_prompt is a structured response with planning/final_prompt/considerations
+            if hasattr(generated_prompt, 'planning'):
+                return jsonify({
+                    "success": True,
+                    "planning": generated_prompt.planning,
+                    "final_prompt": generated_prompt.final_prompt,
+                    "considerations": generated_prompt.considerations,
+                    "industry": industry,
+                    "usecase": usecase,
+                    "context": user_context,
+                    "method": "GPT-5 with structured output"
+                })
+            else:
+                # Fallback for plain text response
+                return jsonify({
+                    "success": True,
+                    "generated_prompt": generated_prompt,
+                    "industry": industry,
+                    "usecase": usecase,
+                    "context": user_context,
+                    "method": "GPT-5 with sequential thinking"
+                })
+        except Exception as parse_error:
+            print(f"⚠️ Could not parse structured response: {parse_error}")
+            return jsonify({
+                "success": True,
+                "generated_prompt": str(generated_prompt),
+                "industry": industry,
+                "usecase": usecase,
+                "context": user_context,
+                "method": "GPT-5 (fallback)"
+            })
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"API error: {str(e)}"
+        }), 500
+
 @app.route('/api/process-prompt', methods=['POST'])
 def process_prompt_api():
     """
-    API endpoint to process prompts using the agent pipeline
+    API endpoint to process prompts using the 5-step agent pipeline with sequential thinking
     """
     try:
         data = request.get_json()
@@ -190,8 +274,10 @@ def process_prompt_api():
         if not prompt_content.strip():
             return jsonify({"error": "Prompt content is required"}), 400
             
-        # Run the async processing function
-        result = asyncio.run(process_prompt_with_agent(prompt_content, industry, usecase))
+        print(f"🔄 Processing prompt through 5-step pipeline for {industry} - {usecase}")
+        
+        # Run the async processing function with sequential thinking
+        result = asyncio.run(process_prompt_with_agent_thinking(prompt_content, industry, usecase))
         
         return jsonify(result)
         
@@ -251,8 +337,17 @@ def health_check():
     """
     Health check endpoint
     """
-    return jsonify({"status": "healthy", "message": "Propt API is running"})
+    return jsonify({
+        "status": "healthy", 
+        "message": "Propt API with Sequential Thinking is running",
+        "features": ["Sequential Thinking", "Latest OpenAI Models", "5-Step Agent Pipeline"]
+    })
 
 if __name__ == '__main__':
-    # Run the Flask development server
+    # Check if OpenAI API key is set
+    if not os.getenv("OPENAI_API_KEY"):
+        print("❌ Please set your OPENAI_API_KEY in the .env file")
+        exit(1)
+    
+    print("🚀 Starting Propt API with Sequential Thinking and Latest OpenAI Features")
     app.run(debug=True, host='0.0.0.0', port=5001)
