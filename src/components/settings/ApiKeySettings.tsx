@@ -5,10 +5,15 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { supabase } from '../../lib/supabase'
+import { createClient } from '@supabase/supabase-js'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from 'sonner'
 import { Eye, EyeOff, Key, Trash2, Plus } from 'lucide-react'
+
+// Inline Supabase configuration
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co'
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-key'
+const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 interface ApiKey {
   id: string

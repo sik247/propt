@@ -1,7 +1,18 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { User, Session } from '@supabase/supabase-js'
-import { supabase, hasValidSupabaseConfig } from '../lib/supabase'
+import { User, Session, createClient } from '@supabase/supabase-js'
 import { toast } from 'sonner'
+
+// Supabase configuration inline to avoid import issues
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co'
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-key'
+
+const hasValidSupabaseConfig = 
+  import.meta.env.VITE_SUPABASE_URL && 
+  import.meta.env.VITE_SUPABASE_ANON_KEY &&
+  import.meta.env.VITE_SUPABASE_URL !== 'https://placeholder.supabase.co' &&
+  import.meta.env.VITE_SUPABASE_ANON_KEY !== 'placeholder-key'
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 interface AuthContextType {
   user: User | null
