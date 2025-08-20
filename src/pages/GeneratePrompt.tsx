@@ -32,11 +32,16 @@ const GeneratePrompt = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [documentContent, setDocumentContent] = useState("");
 
-  // Check free trial usage on component mount - DISABLED for creator
+  // Listen for custom events to show auth modal
   useEffect(() => {
-    // Clear any existing free trial restrictions for creator
-    localStorage.removeItem('propt_free_trial_used');
-    setHasUsedFreeTrial(false); // Always allow free usage for creator
+    const handleShowAuthModal = () => {
+      setShowAuthPrompt(true);
+    };
+
+    window.addEventListener('show-auth-modal', handleShowAuthModal);
+    return () => {
+      window.removeEventListener('show-auth-modal', handleShowAuthModal);
+    };
   }, []);
 
   // Model configurations
@@ -137,12 +142,18 @@ ${content}
       return;
     }
 
-    // Check if user is signed in or has free trial available - DISABLED for creator
-    // if (!user && hasUsedFreeTrial) {
-    //   setShowAuthPrompt(true);
-    //   toast.error('Please sign up to continue generating prompts');
-    //   return;
-    // }
+    // Check usage limits for non-authenticated users
+    if (!isAuthenticated && !usage.canGenerate) {
+      toast.error('Free limit reached! Sign up to continue generating prompts.');
+      setShowAuthPrompt(true);
+      return;
+    }
+
+    // For non-authenticated users, check if they can make another attempt
+    if (!isAuthenticated && !incrementUsage()) {
+      setShowAuthPrompt(true);
+      return;
+    }
 
     setIsGenerating(true);
     setGeneratedResult(null);
@@ -273,7 +284,37 @@ ${content}
       <div className="container mx-auto px-6 py-8 max-w-4xl">
         <div className="space-y-8">
           
-
+          {/* Usage Indicator for Non-Authenticated Users */}
+          {!isAuthenticated && (
+            <Alert className={usage.hasReachedLimit ? "border-red-200 bg-red-50" : "border-blue-200 bg-blue-50"}>
+              <AlertTriangle className={`h-4 w-4 ${usage.hasReachedLimit ? "text-red-600" : "text-blue-600"}`} />
+              <AlertDescription className={usage.hasReachedLimit ? "text-red-800" : "text-blue-800"}>
+                {usage.hasReachedLimit ? (
+                  <span>
+                    <strong>Free limit reached!</strong> You've used your free prompt generation. 
+                    <Button 
+                      variant="link" 
+                      className="h-auto p-0 ml-1 text-red-700 underline"
+                      onClick={() => setShowAuthPrompt(true)}
+                    >
+                      Sign up for unlimited access
+                    </Button>
+                  </span>
+                ) : (
+                  <span>
+                    <strong>{remainingAttempts} free attempt remaining.</strong> 
+                    <Button 
+                      variant="link" 
+                      className="h-auto p-0 ml-1 text-blue-700 underline"
+                      onClick={() => setShowAuthPrompt(true)}
+                    >
+                      Sign up for unlimited access
+                    </Button>
+                  </span>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
 
           {/* Configuration Section */}
           <Card>
@@ -462,11 +503,29 @@ ${content}
                 </p>
               </div>
 
+              {/* API Key Notice */}
+              {!user && (
+                <Alert className="border-amber-200 bg-amber-50">
+                  <Key className="h-4 w-4 text-amber-600" />
+                  <AlertDescription className="text-amber-800">
+                    <strong>Pro Tip:</strong> For unlimited access and better performance, 
+                    <Button 
+                      variant="link" 
+                      className="h-auto p-0 ml-1 text-amber-700 underline"
+                      onClick={() => setShowAuthPrompt(true)}
+                    >
+                      sign up and add your OpenAI API key
+                    </Button>
+                    {' '}in Settings. This gives you direct access to GPT models without limits.
+                  </AlertDescription>
+                </Alert>
+              )}
+
               {/* Generate Button */}
               <Button 
                 onClick={handleGenerate}
-                disabled={isGenerating || !promptDescription.trim()}
-                className="w-full bg-blue-600 hover:bg-blue-700"
+                disabled={isGenerating || !promptDescription.trim() || (!isAuthenticated && usage.hasReachedLimit)}
+                className={`w-full ${(!isAuthenticated && usage.hasReachedLimit) ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
                 size="lg"
               >
                 {isGenerating ? (
@@ -477,7 +536,12 @@ ${content}
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4 mr-2" />
-                    Generate Prompt
+                    {(!isAuthenticated && usage.hasReachedLimit) 
+                      ? 'Sign Up to Continue' 
+                      : !isAuthenticated 
+                        ? `Generate Prompt (${remainingAttempts} free remaining)`
+                        : 'Generate Prompt'
+                    }
                   </>
                 )}
               </Button>
