@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { User, Session } from '@supabase/supabase-js'
-import { supabase, hasValidSupabaseConfig } from '@/lib'
+import { supabase, hasValidSupabaseConfig } from '../lib/supabase'
 import { toast } from 'sonner'
 
 interface AuthContextType {
