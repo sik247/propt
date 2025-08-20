@@ -1,124 +1,78 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FileText, Search, Download } from "lucide-react";
+import { FileText, Search, Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 const BrowsePrompts = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedPrompt, setSelectedPrompt] = useState<any>(null);
+  const [prompts, setPrompts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const categories = [
-    { id: "all", name: "All Prompts", count: 10 },
-    { id: "coding", name: "AI Coding Assistants", count: 6 },
-    { id: "conversational", name: "Conversational AI", count: 2 },
-    { id: "development", name: "Development Platforms", count: 4 }
-  ];
+  // Utility function to download content as markdown
+  const downloadAsMarkdown = (content: string, filename: string) => {
+    const markdownContent = `# ${filename}
 
-  const prompts = [
-    {
-      id: 1,
-      name: "Devin AI",
-      category: "coding",
-      description: "A software engineer using a real computer operating system, specialized in understanding codebases and writing functional code",
-      file: "Prompt.txt",
-      content: "You are Devin, a software engineer using a real computer operating system. You are a real code-wiz: few programmers are as talented as you at understanding codebases, writing functional and clean code, and iterating on your changes until they are correct...",
-      tags: ["coding", "software-engineering", "codebase"],
-      lastUpdated: "2 months ago"
-    },
-    {
-      id: 2,
-      name: "Cursor Agent v1.2",
-      category: "coding",
-      description: "AI coding assistant powered by GPT-4, specialized in pair programming and code completion",
-      file: "Agent Prompt v1.2.txt",
-      content: "You are an AI coding assistant, powered by GPT-4.1. You operate in Cursor. You are pair programming with a USER to solve their coding task...",
-      tags: ["coding", "IDE", "completion", "pair-programming"],
-      lastUpdated: "1 month ago"
-    },
-    {
-      id: 3,
-      name: "Lovable",
-      category: "development",
-      description: "AI editor that creates and modifies web applications with React, TypeScript, and modern tools",
-      file: "Prompt.txt",
-      content: "You are Lovable, an AI editor that creates and modifies web applications. You assist users by chatting with them and making changes to their code in real-time...",
-      tags: ["web-dev", "react", "frontend", "typescript"],
-      lastUpdated: "1 week ago"
-    },
-    {
-      id: 4,
-      name: "Perplexity",
-      category: "conversational",
-      description: "Helpful search assistant trained to provide accurate, detailed answers using search results",
-      file: "Prompt.txt",
-      content: "You are Perplexity, a helpful search assistant trained by Perplexity AI. Your goal is to write an accurate, detailed, and comprehensive answer to the Query...",
-      tags: ["search", "research", "information", "AI-assistant"],
-      lastUpdated: "2 months ago"
-    },
-    {
-      id: 5,
-      name: "Manus Agent",
-      category: "development",
-      description: "AI agent specialized in information gathering, data processing, and creating applications",
-      file: "Agent loop.txt",
-      content: "You are Manus, an AI agent created by the Manus team. You excel at information gathering, fact-checking, documentation, data processing, analysis, and visualization...",
-      tags: ["development", "data-processing", "documentation", "analysis"],
-      lastUpdated: "3 weeks ago"
-    },
-    {
-      id: 6,
-      name: "Replit Agent",
-      category: "development",
-      description: "Coding assistant for the Replit development environment",
-      file: "Prompt.txt",
-      content: "You are a helpful coding assistant created by Replit...",
-      tags: ["coding", "replit", "development", "assistant"],
-      lastUpdated: "2 months ago"
-    },
-    {
-      id: 7,
-      name: "Windsurf Wave 11",
-      category: "coding",
-      description: "Advanced AI coding assistant with comprehensive development capabilities",
-      file: "Prompt Wave 11.txt",
-      content: "You are Windsurf, an advanced AI coding assistant...",
-      tags: ["coding", "development", "AI-assistant", "comprehensive"],
-      lastUpdated: "1 month ago"
-    },
-    {
-      id: 8,
-      name: "Claude (Anthropic)",
-      category: "conversational",
-      description: "AI assistant focused on being helpful, harmless, and honest",
-      file: "Chat Prompt.txt",
-      content: "I'm Claude, an AI assistant created by Anthropic. I'm designed to be helpful, harmless, and honest...",
-      tags: ["conversation", "assistant", "general", "anthropic"],
-      lastUpdated: "1 month ago"
-    },
-    {
-      id: 9,
-      name: "Bolt (Open Source)",
-      category: "development",
-      description: "Open source AI coding assistant for rapid development",
-      file: "Prompt.txt",
-      content: "You are Bolt, an open source AI coding assistant...",
-      tags: ["open-source", "coding", "development", "rapid"],
-      lastUpdated: "2 months ago"
-    },
-    {
-      id: 10,
-      name: "Cline",
-      category: "coding",
-      description: "Open source coding assistant with autonomous capabilities",
-      file: "Prompt.txt",
-      content: "You are Cline, an autonomous coding assistant...",
-      tags: ["open-source", "coding", "autonomous", "assistant"],
-      lastUpdated: "2 months ago"
-    }
-  ];
+${content}
+
+---
+*Downloaded from Propt - ${new Date().toLocaleDateString()}*
+`;
+    
+    const blob = new Blob([markdownContent], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${filename}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success('Prompt downloaded as Markdown file');
+  };
+
+  // Fetch prompts from backend
+  useEffect(() => {
+    const fetchPrompts = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('http://localhost:5001/api/list-prompts');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        setPrompts(data.prompts);
+        
+        // Set up categories
+        const categoryList = [
+          { id: "all", name: "All Prompts", count: data.category_counts.all },
+          { id: "ai_coding_assistants", name: "AI Coding Assistants", count: data.category_counts.ai_coding_assistants },
+          { id: "development_platforms", name: "Development Platforms", count: data.category_counts.development_platforms },
+          { id: "conversational_ai", name: "Conversational AI", count: data.category_counts.conversational_ai }
+        ];
+        setCategories(categoryList);
+        
+      } catch (error) {
+        console.error('Error fetching prompts:', error);
+        toast.error('Failed to load prompts from server');
+        // Set empty fallback data
+        setPrompts([]);
+        setCategories([
+          { id: "all", name: "All Prompts", count: 0 }
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPrompts();
+  }, []);
 
   const filteredPrompts = prompts.filter(prompt => {
     const matchesSearch = prompt.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -130,11 +84,30 @@ const BrowsePrompts = () => {
 
   const handleLoadPrompt = async (prompt: any) => {
     try {
-      // Simulate loading prompt content
-      setSelectedPrompt(prompt);
+      setLoading(true);
+      // Fetch the actual prompt content from backend
+      const response = await fetch(`http://localhost:5001/api/load-prompt/${encodeURIComponent(prompt.tool_path)}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to load prompt: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Update the prompt with actual content
+      const promptWithContent = {
+        ...prompt,
+        content: data.content,
+        available_files: data.available_files
+      };
+      
+      setSelectedPrompt(promptWithContent);
       toast.success(`Loaded ${prompt.name} prompt`);
     } catch (error) {
+      console.error('Error loading prompt:', error);
       toast.error(`Error loading ${prompt.name} prompt`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -192,7 +165,14 @@ const BrowsePrompts = () => {
 
           {/* Main Content */}
           <div className="lg:col-span-3">
-            {selectedPrompt ? (
+            {loading ? (
+              <div className="flex items-center justify-center min-h-[400px]">
+                <div className="text-center">
+                  <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
+                  <p className="text-muted-foreground">Loading prompts...</p>
+                </div>
+              </div>
+            ) : selectedPrompt ? (
               /* Prompt Detail View */
               <Card>
                 <CardHeader>
@@ -244,33 +224,108 @@ const BrowsePrompts = () => {
                       </div>
                     </div>
 
+                    {/* Service Information */}
+                    <div>
+                      <h3 className="font-semibold text-foreground mb-3">About This Service</h3>
+                      <div className="p-4 bg-muted rounded-lg border">
+                        <p className="text-sm text-foreground leading-relaxed">
+                          {selectedPrompt.description}
+                        </p>
+                        <div className="mt-4 pt-3 border-t border-border">
+                          <p className="text-xs text-muted-foreground">
+                            <strong>Available Files:</strong> {selectedPrompt.available_files?.join(', ') || 'Loading...'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Prompt Content */}
                     <div>
                       <h3 className="font-semibold text-foreground mb-3">Prompt Content</h3>
-                      <div className="p-4 bg-muted rounded-lg border">
-                        <pre className="whitespace-pre-wrap text-sm text-foreground font-mono max-h-96 overflow-y-auto">
-                          {selectedPrompt.content}
-                        </pre>
+                      <div className="p-4 bg-background border rounded-lg">
+                        {selectedPrompt.content ? (
+                          <pre className="text-sm text-foreground whitespace-pre-wrap font-mono leading-relaxed overflow-x-auto">
+                            {selectedPrompt.content}
+                          </pre>
+                        ) : (
+                          <div className="flex items-center justify-center py-8">
+                            <div className="text-center">
+                              <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-muted-foreground" />
+                              <p className="text-sm text-muted-foreground">Loading prompt content...</p>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
 
                     {/* Actions */}
                     <div className="flex gap-3">
                       <Button
-                        onClick={() => navigator.clipboard.writeText(selectedPrompt.content)}
-                        className="flex items-center gap-2"
+                        onClick={async () => {
+                          if (selectedPrompt.content) {
+                            navigator.clipboard.writeText(selectedPrompt.content);
+                            toast.success('Prompt copied to clipboard');
+                          } else {
+                            // Load content first
+                            const response = await fetch(`http://localhost:5001/api/load-prompt/${encodeURIComponent(selectedPrompt.tool_path)}`);
+                            if (response.ok) {
+                              const data = await response.json();
+                              navigator.clipboard.writeText(data.content);
+                              toast.success('Prompt copied to clipboard');
+                            } else {
+                              toast.error('Failed to copy prompt');
+                            }
+                          }
+                        }}
+                        variant="outline"
+                        size="sm"
                       >
-                        <Download className="w-4 h-4" />
                         Copy Prompt
                       </Button>
                       <Button
-                        variant="outline"
-                        onClick={() => {
-                          // Navigate to upload page with this prompt loaded
-                          window.location.href = `/upload?prompt=${encodeURIComponent(selectedPrompt.content)}`;
+                        onClick={async () => {
+                          let content = selectedPrompt.content;
+                          if (!content) {
+                            // Load content first
+                            const response = await fetch(`http://localhost:5001/api/load-prompt/${encodeURIComponent(selectedPrompt.tool_path)}`);
+                            if (response.ok) {
+                              const data = await response.json();
+                              content = data.content;
+                            }
+                          }
+                          if (content) {
+                            downloadAsMarkdown(content, selectedPrompt.name);
+                          } else {
+                            toast.error('Failed to load prompt for download');
+                          }
                         }}
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-2"
                       >
-                        Refine This Prompt
+                        <Download className="w-4 h-4" />
+                        Download .md
+                      </Button>
+                      <Button
+                        onClick={async () => {
+                          let content = selectedPrompt.content;
+                          if (!content) {
+                            // Load content first
+                            const response = await fetch(`http://localhost:5001/api/load-prompt/${encodeURIComponent(selectedPrompt.tool_path)}`);
+                            if (response.ok) {
+                              const data = await response.json();
+                              content = data.content;
+                            }
+                          }
+                          if (content) {
+                            window.location.href = `/upload?prompt=${encodeURIComponent(content)}`;
+                          } else {
+                            toast.error('Failed to load prompt for refinement');
+                          }
+                        }}
+                        size="sm"
+                      >
+                        Use This Prompt
                       </Button>
                     </div>
                   </div>

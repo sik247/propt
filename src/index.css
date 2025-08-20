@@ -17,7 +17,7 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 16 94% 58%;
+    --primary: 218 100% 27%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 210 40% 96.1%;
@@ -26,7 +26,7 @@ All colors MUST be HSL.
     --muted: 220 14% 96%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 16 94% 58%;
+    --accent: 35 100% 50%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
@@ -34,14 +34,16 @@ All colors MUST be HSL.
 
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 16 94% 58%;
+    --ring: 218 100% 27%;
 
-    /* Custom design tokens */
-    --primary-orange: 16 94% 58%;
-    --primary-orange-light: 16 94% 65%;
-    --primary-orange-dark: 16 94% 52%;
+    /* Custom design tokens - PayPal Style */
+    --paypal-blue: 218 100% 27%;
+    --paypal-blue-light: 218 100% 35%;
+    --paypal-blue-dark: 218 100% 20%;
+    --paypal-orange: 35 100% 50%;
+    --paypal-orange-light: 35 100% 60%;
     
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary-orange)), hsl(var(--primary-orange-light)));
+    --gradient-primary: linear-gradient(135deg, hsl(var(--paypal-blue)), hsl(var(--paypal-orange)));
     --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%), hsl(220 14% 98%));
     
     --shadow-soft: 0 1px 3px 0 hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
@@ -79,7 +81,7 @@ All colors MUST be HSL.
     --popover: 210 13% 10%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 16 94% 58%;
+    --primary: 218 100% 40%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 210 13% 15%;
@@ -88,25 +90,25 @@ All colors MUST be HSL.
     --muted: 210 13% 15%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 210 13% 15%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 35 100% 55%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 210 13% 20%;
     --input: 210 13% 15%;
-    --ring: 16 94% 58%;
+    --ring: 218 100% 40%;
     
     /* Override sidebar colors for dark theme */
     --sidebar-background: 210 13% 8%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 16 94% 58%;
+    --sidebar-primary: 218 100% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 210 13% 15%;
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 210 13% 20%;
-    --sidebar-ring: 16 94% 58%;
+    --sidebar-ring: 218 100% 40%;
   }
 }
 

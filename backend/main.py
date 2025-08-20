@@ -4,18 +4,14 @@ from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any
 from openai import OpenAI
-# Use OpenAI-based agents to avoid mutex lock issues
 from agents import Agent, Runner
-print("✅ Using OpenAI-based agents implementation!")
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-from utils import load_prompt  # now does templating via string.Template
+
 
 load_dotenv()
 
+client = OpenAI()
+
 # Initialize Flask app
-app = Flask(__name__)
-CORS(app)  # Enable CORS for frontend integration
 
 # -----------------------------------
 # 1) Pydantic models (output schemas)
@@ -69,7 +65,28 @@ def load_prompt(tool_name, prompt_file=None, base_path="sample_prompts", **kwarg
             pass
     return content
 
-def make_main_agent(industry, usecase):
+
+def make_prompt_agent(industry, usecase):
+    
+    # Load the prompt generation template with placeholders filled
+    generate_prompt_template = load_prompt("prompts/generate_prompt.md")
+    filled_prompt = generate_prompt_template.format(industry=industry, usecase=usecase)
+    
+    response = client.responses.create(
+        model="gpt-5",
+        input = filled_prompt,
+        tools=[{"type": "web_search_preview"}],
+        reasoning_effort = {
+            "effort": "medium"
+        }
+
+    )
+    print(response.output_text)
+
+
+
+
+def make_prompt_editing_agent(industry, usecase):
     # Load prompt templates with templating
     original_prompt   = load_prompt("prompts/original_prompt.md", industry=industry, usecase=usecase)
     extraction_prompt = load_prompt("prompts/extraction_prompt.md", industry=industry, usecase=usecase)
@@ -100,7 +117,7 @@ def make_main_agent(industry, usecase):
     critique_agent = Agent(
         name="critique_agent",
         model=MODEL,
-        instructions=critique_user +critique_prompt,
+        instructions=critique_prompt,
         output_type=CritiqueIssues
     )
     extract_agent = Agent(
@@ -109,8 +126,8 @@ def make_main_agent(industry, usecase):
         instructions=extraction_prompt,
         output_type=InstructionList,
     )
-    main_agent = Agent(
-        name="main_agent",
+    prmopt_editing_agent = Agent(
+        name="prmopt_editing_agent",
         model=MODEL,
         instructions=main_prompt,
         output_type=RevisedPromptOutput,
@@ -133,126 +150,14 @@ def make_main_agent(industry, usecase):
             ),
         ]
     )
-    return main_agent
+    return prmopt_editing_agent
 
-async def process_prompt_with_agent(prompt_content: str, industry: str, usecase: str):
-    """
-    Main processing function that executes the 5-step agent pipeline
-    """
-    try:
-        # Create the main agent with industry and usecase context
-        main_agent = make_main_agent(industry, usecase)
-        
-        # Execute the main agent with the prompt content using Agentic AI SDK
-        # The main agent will orchestrate the 5-step pipeline automatically
-        result = await Runner.run(main_agent, prompt_content)
-        
-        # Extract the final processed prompt from the result
-        if hasattr(result, 'final_output'):
-            final_prompt = result.final_output
-        elif hasattr(result, 'value'):
-            final_prompt = result.value
-        else:
-            final_prompt = str(result)
-            
-        return {
-            "success": True,
-            "original_prompt": prompt_content,
-            "processed_prompt": final_prompt,
-            "industry": industry,
-            "usecase": usecase
-        }
-        
-    except Exception as e:
-        return {
-            "success": False,
-            "error": str(e),
-            "original_prompt": prompt_content,
-            "industry": industry,
-            "usecase": usecase
-        }
+async def main():
+    original_prompt   = load_prompt("prompts/original_prompt.md") 
+    make_prompt = make_prompt_agent("healthcare", "patient_engagement")
+    main_agent = make_prompt_editing_agent("healthcare", "patient_engagement")
+    result = await Runner.run(main_agent, original_prompt)
+    print(result.final_output)
 
-@app.route('/api/process-prompt', methods=['POST'])
-def process_prompt_api():
-    """
-    API endpoint to process prompts using the agent pipeline
-    """
-    try:
-        data = request.get_json()
-        
-        if not data:
-            return jsonify({"error": "No JSON data provided"}), 400
-            
-        prompt_content = data.get('content', '')
-        industry = data.get('industry', 'general')
-        usecase = data.get('use_case', 'general')
-        
-        if not prompt_content.strip():
-            return jsonify({"error": "Prompt content is required"}), 400
-            
-        # Run the async processing function
-        result = asyncio.run(process_prompt_with_agent(prompt_content, industry, usecase))
-        
-        return jsonify(result)
-        
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": f"API error: {str(e)}"
-        }), 500
-
-@app.route('/api/load-prompt/<tool_name>', methods=['GET'])
-def load_sample_prompt(tool_name):
-    """
-    Load a sample prompt from the sample_prompts directory
-    """
-    try:
-        # Decode the tool name
-        tool_name = tool_name.replace('%20', ' ')
-        
-        # Get the path to the sample prompts
-        sample_prompts_path = os.path.join(os.path.dirname(__file__), "sample_prompts", tool_name)
-        
-        if not os.path.exists(sample_prompts_path):
-            return jsonify({"error": f"Tool '{tool_name}' not found"}), 404
-        
-        # Look for common prompt file names
-        prompt_files = []
-        for file in os.listdir(sample_prompts_path):
-            if file.lower().endswith(('.txt', '.md')) and ('prompt' in file.lower() or file.lower() == 'prompt.txt'):
-                prompt_files.append(file)
-        
-        if not prompt_files:
-            # If no specific prompt file, get the first .txt file
-            txt_files = [f for f in os.listdir(sample_prompts_path) if f.endswith('.txt')]
-            if txt_files:
-                prompt_files = [txt_files[0]]
-        
-        if not prompt_files:
-            return jsonify({"error": f"No prompt file found for '{tool_name}'"}), 404
-        
-        # Load the first prompt file found
-        prompt_file_path = os.path.join(sample_prompts_path, prompt_files[0])
-        with open(prompt_file_path, 'r', encoding='utf-8') as f:
-            content = f.read()
-        
-        return jsonify({
-            "tool_name": tool_name,
-            "file_name": prompt_files[0],
-            "content": content,
-            "available_files": os.listdir(sample_prompts_path)
-        })
-        
-    except Exception as e:
-        return jsonify({"error": f"Error loading prompt: {str(e)}"}), 500
-
-@app.route('/api/health', methods=['GET'])
-def health_check():
-    """
-    Health check endpoint
-    """
-    return jsonify({"status": "healthy", "message": "Propt API is running"})
-
-if __name__ == '__main__':
-    # Run the Flask development server
-    app.run(debug=True, host='0.0.0.0', port=5001)
+if __name__ == "__main__":
+    asyncio.run(main())

@@ -4,6 +4,7 @@ Startup script for the Propt backend with Sequential Thinking and latest OpenAI 
 """
 import os
 import sys
+from dotenv import load_dotenv
 
 def check_requirements():
     """Check if all required environment variables and dependencies are available"""
@@ -34,6 +35,9 @@ def check_requirements():
 
 def main():
     """Main function to start the server"""
+    # Load environment variables from .env file
+    load_dotenv()
+    
     print("🚀 PROPT BACKEND STARTUP")
     print("=" * 50)
     print("Features:")

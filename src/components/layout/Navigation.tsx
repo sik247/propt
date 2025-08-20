@@ -18,7 +18,7 @@ const Navigation = ({ user, onLogin, onLogout }: NavigationProps) => {
     { name: "Home", href: "/" },
     { name: "Browse Prompts", href: "/browse" },
     { name: "Upload & Refine", href: "/upload" },
-    { name: "A/B Testing", href: "/testing" },
+    // { name: "A/B Testing", href: "/testing" }, // Temporarily disabled
     { name: "Generate", href: "/generate" },
   ];
 
@@ -29,9 +29,9 @@ const Navigation = ({ user, onLogin, onLogout }: NavigationProps) => {
           {/* Logo */}
           <div className="flex items-center gap-3">
             <img 
-              src="/lovable-uploads/0fc2130e-03a0-44e0-9b18-d3249c9f27ac.png" 
+              src="/img/logo.png" 
               alt="Propt" 
-              className="w-8 h-8"
+              className="w-12 h-12"
             />
             <Link to="/" className="text-xl font-semibold text-foreground">
               propt

@@ -40,9 +40,17 @@ const Home = () => {
       <div className="relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center">
+            {/* Logo */}
+            <div className="flex justify-center mb-8">
+              <img 
+                src="/img/logo.png" 
+                alt="Propt" 
+                className="w-24 h-24 sm:w-32 sm:h-32"
+              />
+            </div>
             <h1 className="text-5xl sm:text-6xl font-bold text-foreground mb-6">
-              Craft Perfect{" "}
-              <span className="text-primary">AI Prompts</span>
+              <span className="text-primary">Service Level Prompts</span>{" "}
+              in One Place
             </h1>
             <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
               Generate, refine, and test AI prompts with our advanced pipeline. 
@@ -125,21 +133,7 @@ const Home = () => {
         </div>
       </div>
 
-      {/* CTA Section */}
-      <div className="py-24">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold text-foreground mb-4">
-            Ready to Get Started?
-          </h2>
-          <p className="text-lg text-muted-foreground mb-8">
-            Join thousands of developers and researchers using Propt to create better AI prompts.
-          </p>
-          <Button size="lg" className="bg-primary hover:bg-primary/90">
-            <Sparkles className="w-5 h-5 mr-2" />
-            Start Creating Prompts
-          </Button>
-        </div>
-      </div>
+
     </div>
   );
 };

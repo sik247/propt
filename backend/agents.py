@@ -20,16 +20,18 @@ class Agent:
     def __init__(
         self, 
         name: str, 
-        model: str = "gpt-5",
+        model: str = "gpt-5-mini-2025-08-07",
         instructions: str = "",
         output_type: Optional[Type[BaseModel]] = None,
-        tools: Optional[List[Dict]] = None
+        tools: Optional[List[Dict]] = None,
+        reasoning_effort: str = "medium"
     ):
         self.name = name
         self.model = model
         self.instructions = instructions
         self.output_type = output_type
         self.tools = tools or []
+        self.reasoning_effort = reasoning_effort
     
     def as_tool(self, tool_name: str, tool_description: str) -> Dict[str, Any]:
         """Convert this agent to a tool that can be used by other agents"""
@@ -78,17 +80,14 @@ class Runner:
         """Run a simple agent without tools"""
         try:
             client = get_client()
-            response = client.chat.completions.create(
+            response = client.responses.create(
                 model=agent.model,
-                messages=[
-                    {"role": "system", "content": agent.instructions},
-                    {"role": "user", "content": input_data}
-                ],
-                temperature=0.7,
-                max_tokens=2000
+                input=f"{agent.instructions}\n\nUser: {input_data}",
+                tools=[{"type": "web_search_preview"}],
+                reasoning={"effort": agent.reasoning_effort}
             )
             
-            content = response.choices[0].message.content
+            content = response.output_text
             print(f"✅ {agent.name} completed")
             
             # If output_type is specified, try to parse it
@@ -161,17 +160,14 @@ class Runner:
             """
             
             client = get_client()
-            response = client.chat.completions.create(
+            response = client.responses.create(
                 model=agent.model,
-                messages=[
-                    {"role": "system", "content": agent.instructions},
-                    {"role": "user", "content": synthesis_prompt}
-                ],
-                temperature=0.7,
-                max_tokens=2000
+                input=f"{agent.instructions}\n\nUser: {synthesis_prompt}",
+                tools=[{"type": "web_search_preview"}],
+                reasoning={"effort": agent.reasoning_effort}
             )
             
-            final_content = response.choices[0].message.content
+            final_content = response.output_text
             print(f"✅ {agent.name} orchestration completed")
             
             return RunResult(final_content, agent.name)
