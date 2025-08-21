@@ -101,7 +101,7 @@ def make_prompt_editing_agent(industry, usecase):
         name="search_agent",
         model=MODEL,
         instructions=f"""
-        You are a **Web-Search Assistant** for **{industry}**.  
+        You are a **Web-Search Assistant** for **{industry}** and **{usecase}**.  
         When invoked, call the `web.search_query` tool with a concise, focused query  
         to retrieve up-to-date domain facts that are relevant to prompt engineering.  
         Return only JSON: {{ "query": "...", "results": [{{title, snippet, url}}...] }}
