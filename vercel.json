@@ -9,7 +9,7 @@
       }
     },
     {
-      "src": "backend/main_flask.py",
+      "src": "backend/run_server.py",
       "use": "@vercel/python",
       "config": {
         "maxLambdaSize": "15mb",
@@ -20,7 +20,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/backend/main_flask.py"
+      "dest": "/backend/run_server.py"
     },
     {
       "src": "/((?!api/|assets/|.*\\..*).*)",
@@ -28,7 +28,11 @@
     }
   ],
   "env": {
-    "PYTHON_VERSION": "3.9"
+    "PYTHON_VERSION": "3.9",
+    "FLASK_APP": "backend/main_flask.py",
+    "FLASK_ENV": "production",
+    "FLASK_DEBUG": "0",
+    "CORS_ALLOW_ORIGIN": "*"
   },
   "framework": null,
   "installCommand": "npm ci",
