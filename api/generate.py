@@ -12,7 +12,10 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'backend'))
 load_dotenv()
 
 # Initialize OpenAI client
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+api_key = os.getenv("OPENAI_API_KEY")
+if not api_key:
+    raise ValueError("OPENAI_API_KEY environment variable is not set")
+client = OpenAI(api_key=api_key)
 
 def load_prompt(prompt_path):
     """Load a prompt file from the absolute path"""
@@ -27,10 +30,6 @@ def load_prompt(prompt_path):
 def make_prompt_agent(industry, usecase, model_provider="openai", model="gpt-5-mini-2025-08-07", reasoning_effort="medium"):
     """Generate a prompt using the specified model"""
     try:
-        # Check if OpenAI API key is set
-        if not os.getenv("OPENAI_API_KEY"):
-            raise Exception("OpenAI API key is not set. Please set OPENAI_API_KEY environment variable.")
-
         # Choose the appropriate prompt template
         if model_provider == "openai" and model == "gpt-5-mini-2025-08-07":
             template_path = "prompts/generate_prompt.md"
@@ -39,22 +38,16 @@ def make_prompt_agent(industry, usecase, model_provider="openai", model="gpt-5-m
         else:
             template_path = "prompts/generate_prompt.md"
 
-        print(f"Loading template from: {template_path}")
-
         # Load and fill the template
         template = load_prompt(template_path)
         if not template:
             raise Exception(f"Failed to load prompt template: {template_path}")
-
-        print(f"Template loaded successfully, length: {len(template)}")
 
         filled_prompt = template.format(
             industry=industry,
             usecase=usecase,
             region="global"
         )
-
-        print(f"Template filled successfully, making API call with model: {model}")
 
         # Generate the response
         response = client.responses.create(
@@ -64,14 +57,11 @@ def make_prompt_agent(industry, usecase, model_provider="openai", model="gpt-5-m
             reasoning={"effort": reasoning_effort}
         )
 
-        print("API call successful, returning response")
         return response.output_text
 
     except Exception as e:
-        print(f"Error in make_prompt_agent: {str(e)}")
-        print(f"Error type: {type(e)}")
-        print(f"Error details: {e.__dict__ if hasattr(e, '__dict__') else 'No additional details'}")
-        raise Exception(f"Failed to generate prompt: {str(e)}")
+        print(f"Error in make_prompt_agent: {e}")
+        raise
 
 def handle_request(request):
     """Handle incoming requests"""
