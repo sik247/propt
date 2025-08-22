@@ -27,7 +27,15 @@ CORS(app)
 api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
     raise ValueError("OPENAI_API_KEY environment variable is not set")
-client = OpenAI(api_key=api_key)
+try:
+    # Try new OpenAI client initialization
+    client = OpenAI(api_key=api_key)
+except TypeError:
+    # Fallback for older versions
+    client = OpenAI(
+        api_key=api_key,
+        base_url="https://api.openai.com/v1"  # Explicitly set base URL
+    )
 
 # -----------------------------------
 # Pydantic models (output schemas)

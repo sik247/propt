@@ -15,10 +15,13 @@
         "maxLambdaSize": "15mb",
         "runtime": "python3.9",
         "includeFiles": [
-          "backend/**",
+          "backend/**/*.py",
           "backend/prompts/**/*",
-          "backend/sample_prompts/**/*"
-        ]
+          "backend/sample_prompts/**/*",
+          "backend/requirements.txt"
+        ],
+        "installCommand": "pip install -r backend/requirements.txt",
+        "handler": "main_flask.app"
       }
     }
   ],
