@@ -8,14 +8,19 @@ from agents import Agent, Runner, get_client
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
-load_dotenv()
+# Load environment variables from root .env file
+root_env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+load_dotenv(root_env_path)
 
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)
 
 # Initialize OpenAI client
-client = OpenAI(api_key = os.getenv("OPENAI_API_KEY"))
+api_key = os.getenv("OPENAI_API_KEY")
+if not api_key:
+    raise ValueError("OPENAI_API_KEY environment variable is not set")
+client = OpenAI(api_key=api_key)
 
 # -----------------------------------
 # Pydantic models (output schemas)
