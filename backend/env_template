@@ -1,10 +1,15 @@
-# OpenAI API Configuration
-OPENAI_API_KEY=your_openai_api_key_here
+# OpenAI API Key (Required)
+OPENAI_API_KEY=sk-your-api-key-here
 
-# Instructions:
-# 1. Replace "your_openai_api_key_here" with your actual OpenAI API key
-# 2. Rename this file from "env_template" to ".env" (with the dot at the beginning)
-# 3. Get your API key from: https://platform.openai.com/api-keys
+# Environment Settings
+NODE_ENV=development
+FLASK_ENV=development
+FLASK_APP=/Users/harrykang/Desktop/propt/backend/main_flask.py
+FLASK_DEBUG=1
 
-# Example (replace with your real key):
-# OPENAI_API_KEY=sk-proj-abcd1234...
+# CORS Settings
+CORS_ALLOW_ORIGIN=*
+
+# Model Settings
+DEFAULT_MODEL=gpt-4-1106-preview
+FALLBACK_MODEL=gpt-4

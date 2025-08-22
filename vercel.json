@@ -13,7 +13,11 @@
       "use": "@vercel/python",
       "config": {
         "maxLambdaSize": "15mb",
-        "runtime": "python3.9"
+        "runtime": "python3.9",
+        "includeFiles": [
+          "backend/prompts/**",
+          "backend/sample_prompts/**"
+        ]
       }
     }
   ],
@@ -32,7 +36,9 @@
     "FLASK_APP": "backend/main_flask.py",
     "FLASK_ENV": "production",
     "FLASK_DEBUG": "0",
-    "CORS_ALLOW_ORIGIN": "*"
+    "CORS_ALLOW_ORIGIN": "*",
+    "DEFAULT_MODEL": "gpt-4-1106-preview",
+    "FALLBACK_MODEL": "gpt-4"
   },
   "framework": null,
   "installCommand": "npm ci",
