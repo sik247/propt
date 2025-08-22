@@ -12,7 +12,8 @@
       "src": "api/*.py",
       "use": "@vercel/python",
       "config": {
-        "maxLambdaSize": "15mb"
+        "maxLambdaSize": "15mb",
+        "runtime": "python3.9"
       }
     }
   ],
@@ -22,19 +23,14 @@
       "dest": "/api/generate.py"
     },
     {
+      "src": "/api/analyze-document",
+      "dest": "/api/analyze.py"
+    },
+    {
       "src": "/((?!api/|assets/|.*\\..*).*)",
       "dest": "/index.html"
     }
   ],
-  "functions": {
-    "api/*.py": {
-      "memory": 1024,
-      "maxDuration": 60
-    }
-  },
-  "env": {
-    "PYTHON_VERSION": "3.9"
-  },
   "framework": null,
   "installCommand": "npm ci",
   "buildCommand": "npm run build"
