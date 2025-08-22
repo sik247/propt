@@ -9,13 +9,25 @@
       }
     },
     {
-      "src": "api/index.py",
+      "src": "api/*.py",
       "use": "@vercel/python"
     }
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
+      "src": "/api/list-prompts",
+      "dest": "/api/list_prompts.py"
+    },
+    {
+      "src": "/api/health",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/api/generate-prompt",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/api/process-prompt",
       "dest": "/api/index.py"
     },
     {
