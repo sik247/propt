@@ -10,7 +10,14 @@ from flask_cors import CORS
 
 # Load environment variables from root .env file
 root_env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+print(f"Loading environment variables from: {root_env_path}")
 load_dotenv(root_env_path)
+
+# Debug: Print environment status
+if os.getenv("OPENAI_API_KEY"):
+    print("✅ OPENAI_API_KEY loaded successfully")
+else:
+    print("❌ Failed to load OPENAI_API_KEY from:", root_env_path)
 
 # Initialize Flask app
 app = Flask(__name__)
