@@ -58,7 +58,7 @@ def handle_request(event, context):
                 reasoning_effort = body.get('reasoning_effort', 'medium')
                 
                 # Import the function here to avoid circular imports
-                from main_flask import make_prompt_agent
+                from backend.main_flask import make_prompt_agent
                 
                 # Generate the prompt
                 response = make_prompt_agent(
@@ -99,7 +99,7 @@ def handle_request(event, context):
                     }
                 
                 # Import the function here to avoid circular imports
-                from main_flask import process_prompt_with_agent_thinking
+                from backend.main_flask import process_prompt_with_agent_thinking
                 import asyncio
                 
                 # Process the prompt
