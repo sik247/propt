@@ -22,7 +22,7 @@ const GeneratePrompt = () => {
   const [promptDescription, setPromptDescription] = useState("");
   const [generatedResult, setGeneratedResult] = useState<any>(null);
   const [selectedCompany, setSelectedCompany] = useState("openai");
-  const [selectedModel, setSelectedModel] = useState("gpt-5-mini-2025-08-07");
+  const [selectedModel, setSelectedModel] = useState("gpt-4-1106-preview");
   const [reasoningEffort, setReasoningEffort] = useState("medium");
   const [hasUsedFreeTrial, setHasUsedFreeTrial] = useState(false);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
@@ -47,8 +47,8 @@ const GeneratePrompt = () => {
   // Model configurations
   const modelOptions = {
     openai: [
-      { id: "gpt-5-mini-2025-08-07", name: "GPT-5", description: "Latest" },
-      { id: "gpt-4.1", name: "GPT-4.1", description: "" }
+      { id: "gpt-4-1106-preview", name: "GPT-4 Turbo", description: "Latest" },
+      { id: "gpt-4", name: "GPT-4", description: "" }
     ]
   };
 
