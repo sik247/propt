@@ -18,18 +18,20 @@
   ],
   "routes": [
     {
-      "src": "/api/list-prompts",
-      "dest": "/api/list_prompts.py"
-    },
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/index.py"
+      "src": "/generate",
+      "dest": "/api/generate.py"
     },
     {
       "src": "/((?!api/|assets/|.*\\..*).*)",
       "dest": "/index.html"
     }
   ],
+  "functions": {
+    "api/*.py": {
+      "memory": 1024,
+      "maxDuration": 60
+    }
+  },
   "env": {
     "PYTHON_VERSION": "3.9"
   },
