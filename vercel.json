@@ -9,7 +9,7 @@
       }
     },
     {
-      "src": "api/*.py",
+      "src": "backend/main_flask.py",
       "use": "@vercel/python",
       "config": {
         "maxLambdaSize": "15mb",
@@ -19,18 +19,17 @@
   ],
   "routes": [
     {
-      "src": "/generate",
-      "dest": "/api/generate.py"
-    },
-    {
-      "src": "/api/analyze-document",
-      "dest": "/api/analyze.py"
+      "src": "/api/(.*)",
+      "dest": "/backend/main_flask.py"
     },
     {
       "src": "/((?!api/|assets/|.*\\..*).*)",
       "dest": "/index.html"
     }
   ],
+  "env": {
+    "PYTHON_VERSION": "3.9"
+  },
   "framework": null,
   "installCommand": "npm ci",
   "buildCommand": "npm run build"
