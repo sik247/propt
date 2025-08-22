@@ -9,22 +9,39 @@
       }
     },
     {
-      "src": "backend/run_server.py",
+      "src": "backend/main_flask.py",
       "use": "@vercel/python",
       "config": {
         "maxLambdaSize": "15mb",
         "runtime": "python3.9",
         "includeFiles": [
-          "backend/prompts/**",
-          "backend/sample_prompts/**"
+          "backend/**",
+          "backend/prompts/**/*",
+          "backend/sample_prompts/**/*"
         ]
       }
     }
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/backend/run_server.py"
+      "src": "/api/list-prompts",
+      "dest": "/backend/main_flask.py"
+    },
+    {
+      "src": "/api/generate-prompt",
+      "dest": "/backend/main_flask.py"
+    },
+    {
+      "src": "/api/process-prompt",
+      "dest": "/backend/main_flask.py"
+    },
+    {
+      "src": "/api/load-prompt/(.*)",
+      "dest": "/backend/main_flask.py"
+    },
+    {
+      "src": "/api/health",
+      "dest": "/backend/main_flask.py"
     },
     {
       "src": "/((?!api/|assets/|.*\\..*).*)",
