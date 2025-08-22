@@ -9,17 +9,17 @@
       }
     },
     {
-      "src": "backend/main_flask.py",
+      "src": "api/index.py",
       "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/backend/main_flask.py"
+      "dest": "/api/index.py"
     },
     {
-      "src": "/((?!assets/|.*\\..*).*)",
+      "src": "/((?!api/|assets/|.*\\..*).*)",
       "dest": "/index.html"
     }
   ],

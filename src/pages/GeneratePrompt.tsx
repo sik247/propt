@@ -47,8 +47,8 @@ const GeneratePrompt = () => {
   // Model configurations
   const modelOptions = {
     openai: [
-      { id: "gpt-5-mini-2025-08-07", name: "GPT-5", description: "Next generation model with advanced reasoning" },
-      { id: "gpt-4.1", name: "GPT-4.1", description: "Enhanced version of GPT-4 with better performance" }
+      { id: "gpt-5-mini-2025-08-07", name: "GPT-5", description: "Latest" },
+      { id: "gpt-4.1", name: "GPT-4.1", description: "" }
     ]
   };
 
@@ -328,7 +328,7 @@ ${content}
               
               {/* Foundational Model Selection */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">Foundational Model Selection</h3>
+                <h3 className="text-lg font-semibold text-foreground">Model to be Pro(m)pted</h3>
                 
                 {/* Model Provider Selection */}
                 <div className="space-y-2">
