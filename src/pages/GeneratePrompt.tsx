@@ -82,7 +82,7 @@ const GeneratePrompt = () => {
 
     setIsAnalyzing(true);
     try {
-      const response = await fetch('http://localhost:5001/api/analyze-document', {
+      const response = await fetch('/api/analyze-document', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -159,7 +159,7 @@ ${content}
     setGeneratedResult(null);
 
     try {
-      const response = await fetch('http://localhost:5001/api/generate-prompt', {
+      const response = await fetch('/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
