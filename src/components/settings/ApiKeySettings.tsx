@@ -39,19 +39,29 @@ export function ApiKeySettings() {
 
   // Fetch user's API keys
   const fetchApiKeys = async () => {
-    if (!user) return
+    if (!user) {
+      console.log('No user found, skipping API key fetch')
+      return
+    }
 
     try {
+      console.log('Fetching API keys for user:', user.id)
       const { data, error } = await supabase
         .from('user_api_keys')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
-      if (error) throw error
+      if (error) {
+        console.error('Supabase fetch error:', error)
+        throw error
+      }
+      
+      console.log('Fetched API keys:', data)
       setApiKeys(data || [])
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching API keys:', error)
+      toast.error(error.message || 'Failed to fetch API keys')
     }
   }
 
@@ -64,9 +74,17 @@ export function ApiKeySettings() {
 
     try {
       setLoading(true)
+      console.log('Adding API key for user:', user.id)
+      console.log('Selected service:', selectedService)
+      
+      // Validate API key format for OpenAI
+      if (selectedService === 'openai' && !newKey.startsWith('sk-')) {
+        toast.error('Invalid OpenAI API key format. Should start with sk-')
+        return
+      }
       
       // In production, you'd encrypt the API key before storing
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('user_api_keys')
         .insert([
           {
@@ -76,15 +94,20 @@ export function ApiKeySettings() {
             is_active: true
           }
         ])
+        .select()
 
-      if (error) throw error
+      if (error) {
+        console.error('Supabase error:', error)
+        throw error
+      }
       
+      console.log('API key added successfully:', data)
       setNewKey('')
       toast.success('API key added successfully!')
       await fetchApiKeys()
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error adding API key:', error)
-      toast.error('Failed to add API key')
+      toast.error(error.message || 'Failed to add API key')
     } finally {
       setLoading(false)
     }
