@@ -10,7 +10,10 @@
     },
     {
       "src": "api/*.py",
-      "use": "@vercel/python"
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "15mb"
+      }
     }
   ],
   "routes": [
@@ -19,15 +22,7 @@
       "dest": "/api/list_prompts.py"
     },
     {
-      "src": "/api/health",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/api/generate-prompt",
-      "dest": "/api/index.py"
-    },
-    {
-      "src": "/api/process-prompt",
+      "src": "/api/(.*)",
       "dest": "/api/index.py"
     },
     {
@@ -35,6 +30,9 @@
       "dest": "/index.html"
     }
   ],
+  "env": {
+    "PYTHON_VERSION": "3.9"
+  },
   "framework": null,
   "installCommand": "npm ci",
   "buildCommand": "npm run build"
