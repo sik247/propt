@@ -21,33 +21,23 @@
           "backend/requirements.txt"
         ],
         "installCommand": "pip install -r backend/requirements.txt",
-        "handler": "main_flask.app"
+        "handler": "main_flask.app",
+        "functions": {
+          "api/*": {
+            "memory": 1024,
+            "maxDuration": 10
+          }
+        }
       }
     }
   ],
   "routes": [
     {
-      "src": "/api/list-prompts",
+      "src": "/api/(.*)",
       "dest": "/backend/main_flask.py"
     },
     {
-      "src": "/api/generate-prompt",
-      "dest": "/backend/main_flask.py"
-    },
-    {
-      "src": "/api/process-prompt",
-      "dest": "/backend/main_flask.py"
-    },
-    {
-      "src": "/api/load-prompt/(.*)",
-      "dest": "/backend/main_flask.py"
-    },
-    {
-      "src": "/api/health",
-      "dest": "/backend/main_flask.py"
-    },
-    {
-      "src": "/((?!api/|assets/|.*\\..*).*)",
+      "src": "/((?!api/).*)",
       "dest": "/index.html"
     }
   ],
