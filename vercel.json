@@ -13,7 +13,7 @@
       "use": "@vercel/python",
       "config": {
         "maxLambdaSize": "15mb",
-        "runtime": "python3.9",
+        "runtime": "python3.13",
         "includeFiles": [
           "backend/**/*.py",
           "backend/prompts/**/*",
@@ -42,7 +42,8 @@
     }
   ],
   "env": {
-    "PYTHON_VERSION": "3.9",
+    "PYTHON_VERSION": "3.13",
+    "PYTHONPATH": "backend",
     "FLASK_APP": "backend/main_flask.py",
     "FLASK_ENV": "production",
     "FLASK_DEBUG": "0",

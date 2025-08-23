@@ -40,7 +40,7 @@ ${content}
     const fetchPrompts = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/list-prompts');
+        const response = await fetch('http://localhost:5001/api/list-prompts');
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -86,7 +86,7 @@ ${content}
     try {
       setLoading(true);
       // Fetch the actual prompt content from backend
-      const response = await fetch(`/api/load-prompt/${encodeURIComponent(prompt.tool_path)}`);
+      const response = await fetch(`http://localhost:5001/api/load-prompt/${encodeURIComponent(prompt.tool_path)}`);
       
       if (!response.ok) {
         throw new Error(`Failed to load prompt: ${response.status}`);
@@ -267,7 +267,7 @@ ${content}
                             toast.success('Prompt copied to clipboard');
                           } else {
                             // Load content first
-                            const response = await fetch(`/api/load-prompt/${encodeURIComponent(selectedPrompt.tool_path)}`);
+                            const response = await fetch(`http://localhost:5001/api/load-prompt/${encodeURIComponent(selectedPrompt.tool_path)}`);
                             if (response.ok) {
                               const data = await response.json();
                               navigator.clipboard.writeText(data.content);
@@ -287,7 +287,7 @@ ${content}
                           let content = selectedPrompt.content;
                           if (!content) {
                             // Load content first
-                            const response = await fetch(`/api/load-prompt/${encodeURIComponent(selectedPrompt.tool_path)}`);
+                            const response = await fetch(`http://localhost:5001/api/load-prompt/${encodeURIComponent(selectedPrompt.tool_path)}`);
                             if (response.ok) {
                               const data = await response.json();
                               content = data.content;
@@ -311,7 +311,7 @@ ${content}
                           let content = selectedPrompt.content;
                           if (!content) {
                             // Load content first
-                            const response = await fetch(`/api/load-prompt/${encodeURIComponent(selectedPrompt.tool_path)}`);
+                            const response = await fetch(`http://localhost:5001/api/load-prompt/${encodeURIComponent(selectedPrompt.tool_path)}`);
                             if (response.ok) {
                               const data = await response.json();
                               content = data.content;
