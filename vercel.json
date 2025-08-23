@@ -13,24 +13,22 @@
       "use": "@vercel/python",
       "config": {
         "maxLambdaSize": "15mb",
-        "runtime": "python3.13",
+        "runtime": "python3.9",
         "includeFiles": [
           "backend/**/*.py",
           "backend/prompts/**/*",
           "backend/sample_prompts/**/*",
           "backend/requirements.txt"
-        ],
-        "installCommand": "pip install -r backend/requirements.txt",
-        "handler": "main_flask.app",
-        "functions": {
-          "api/*": {
-            "memory": 1024,
-            "maxDuration": 10
-          }
-        }
+        ]
       }
     }
   ],
+  "functions": {
+    "backend/main_flask.py": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  },
   "routes": [
     {
       "src": "/api/(.*)",
@@ -42,9 +40,8 @@
     }
   ],
   "env": {
-    "PYTHON_VERSION": "3.13",
-    "PYTHONPATH": "backend",
-    "FLASK_APP": "backend/main_flask.py",
+    "PYTHON_VERSION": "3.9",
+    "PYTHONPATH": "/var/task/backend",
     "FLASK_ENV": "production",
     "FLASK_DEBUG": "0",
     "CORS_ALLOW_ORIGIN": "*"
