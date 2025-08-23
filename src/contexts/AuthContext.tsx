@@ -49,6 +49,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.warn('Supabase not configured. Running in development mode without authentication.')
       setLoading(false)
       return
+      return
     }
 
     // Get initial session

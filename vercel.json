@@ -28,12 +28,22 @@
       "dest": "/backend/main_flask.py"
     },
     {
+      "src": "/assets/(.*)",
+      "dest": "/assets/$1"
+    },
+    {
+      "src": "/(.*\\.(ico|png|jpg|jpeg|gif|svg|css|js))",
+      "dest": "/$1"
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html"
     }
   ],
   "env": {
     "FLASK_ENV": "production",
-    "CORS_ALLOW_ORIGIN": "*"
+    "CORS_ALLOW_ORIGIN": "*",
+    "VITE_SUPABASE_URL": "@vite_supabase_url",
+    "VITE_SUPABASE_ANON_KEY": "@vite_supabase_anon_key"
   }
 }
