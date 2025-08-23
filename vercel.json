@@ -15,38 +15,25 @@
         "maxLambdaSize": "15mb",
         "runtime": "python3.9",
         "includeFiles": [
-          "backend/**/*.py",
-          "backend/prompts/**/*",
-          "backend/sample_prompts/**/*",
-          "backend/requirements.txt"
+          "backend/**",
+          "backend/prompts/**",
+          "backend/sample_prompts/**"
         ]
       }
     }
   ],
-  "functions": {
-    "backend/main_flask.py": {
-      "memory": 1024,
-      "maxDuration": 10
-    }
-  },
   "routes": [
     {
       "src": "/api/(.*)",
       "dest": "/backend/main_flask.py"
     },
     {
-      "src": "/((?!api/).*)",
+      "src": "/(.*)",
       "dest": "/index.html"
     }
   ],
   "env": {
-    "PYTHON_VERSION": "3.9",
-    "PYTHONPATH": "/var/task/backend",
     "FLASK_ENV": "production",
-    "FLASK_DEBUG": "0",
     "CORS_ALLOW_ORIGIN": "*"
-  },
-  "framework": null,
-  "installCommand": "npm ci",
-  "buildCommand": "npm run build"
+  }
 }
