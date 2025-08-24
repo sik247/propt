@@ -21,13 +21,51 @@ else:
 
 # Initialize Flask app
 app = Flask(__name__)
+
+# Configure logging
+import logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+# Configure CORS
 CORS(app, resources={
     r"/api/*": {
         "origins": "*",
         "methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization"]
+        "allow_headers": ["Content-Type", "Authorization", "Accept"],
+        "expose_headers": ["Content-Type", "Authorization"]
     }
 })
+
+# Add error handlers
+@app.errorhandler(404)
+def not_found_error(error):
+    logger.error(f"404 Error: {error}")
+    return jsonify({"error": "Resource not found", "path": request.path}), 404
+
+@app.errorhandler(405)
+def method_not_allowed_error(error):
+    logger.error(f"405 Error: {error}, Method: {request.method}, Path: {request.path}")
+    return jsonify({
+        "error": "Method not allowed",
+        "method": request.method,
+        "path": request.path,
+        "allowed_methods": list(app.url_map.iter_rules())
+    }), 405
+
+@app.errorhandler(500)
+def internal_error(error):
+    logger.error(f"500 Error: {error}")
+    return jsonify({"error": "Internal server error", "details": str(error)}), 500
+
+# Add request logging
+@app.before_request
+def log_request_info():
+    logger.debug("Request Headers: %s", dict(request.headers))
+    logger.debug("Request Method: %s", request.method)
+    logger.debug("Request Path: %s", request.path)
+    if request.is_json:
+        logger.debug("Request JSON: %s", request.get_json())
 
 # Initialize OpenAI client
 api_key = os.getenv("OPENAI_API_KEY")
