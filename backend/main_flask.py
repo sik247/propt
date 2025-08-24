@@ -70,18 +70,42 @@ class GenereatedPrompt(BaseModel):
 # Utility Functions
 # -----------------------------------
 def load_prompt(tool_name, prompt_file=None, base_path="sample_prompts", **kwargs):
-    if prompt_file is None:
-        path = tool_name
-    else:
-        path = os.path.join(base_path, tool_name, prompt_file)
-    with open(path, "r") as f:
-        content = f.read()
-    if kwargs:
-        try:
-            content = content.format(**kwargs)
-        except Exception:
-            pass
-    return content
+    try:
+        if prompt_file is None:
+            path = tool_name
+        else:
+            # Try multiple possible paths
+            possible_paths = [
+                os.path.join(os.path.dirname(__file__), base_path, tool_name, prompt_file),  # Local development
+                os.path.join("/var/task/backend", base_path, tool_name, prompt_file),  # Vercel
+                os.path.join(base_path, tool_name, prompt_file)  # Relative path
+            ]
+            
+            path = None
+            for p in possible_paths:
+                if os.path.exists(p):
+                    path = p
+                    break
+            
+            if path is None:
+                print(f"❌ Could not find prompt file. Tried paths: {possible_paths}")
+                return "Error: Prompt file not found"
+        
+        print(f"📂 Loading prompt from: {path}")
+        with open(path, "r", encoding='utf-8') as f:
+            content = f.read()
+        
+        if kwargs:
+            try:
+                content = content.format(**kwargs)
+            except Exception as e:
+                print(f"⚠️ Error formatting prompt: {e}")
+                pass
+        
+        return content
+    except Exception as e:
+        print(f"❌ Error loading prompt: {e}")
+        return f"Error loading prompt: {str(e)}"
 
 # -----------------------------------
 # Core Agent Functions
@@ -528,10 +552,27 @@ def list_all_prompts():
     List all available prompts from the sample_prompts directory
     """
     try:
-        sample_prompts_path = os.path.join(os.path.dirname(__file__), "sample_prompts")
+        # Try multiple possible paths for sample_prompts directory
+        possible_paths = [
+            os.path.join(os.path.dirname(__file__), "sample_prompts"),  # Local development
+            os.path.join("/var/task/backend", "sample_prompts"),  # Vercel
+            "sample_prompts"  # Relative path
+        ]
         
-        if not os.path.exists(sample_prompts_path):
-            return jsonify({"error": "Sample prompts directory not found"}), 404
+        sample_prompts_path = None
+        for path in possible_paths:
+            if os.path.exists(path):
+                sample_prompts_path = path
+                print(f"✅ Found sample_prompts directory at: {path}")
+                break
+            else:
+                print(f"❌ Directory not found at: {path}")
+        
+        if not sample_prompts_path:
+            return jsonify({
+                "error": "Sample prompts directory not found",
+                "tried_paths": possible_paths
+            }), 404
         
         prompts = []
         categories = {
