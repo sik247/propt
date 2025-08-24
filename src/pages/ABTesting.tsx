@@ -38,7 +38,7 @@ const ABTesting = () => {
 
     try {
       // Simulate API call to backend for AB testing
-      const response = await fetch('http://localhost:5001/api/ab-test', {
+      const response = await fetch('/api/ab-test', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

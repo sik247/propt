@@ -58,7 +58,7 @@ ${content}
 
   const processPrompt = async (content: string, industry: string, useCase: string) => {
     try {
-      const response = await fetch('http://localhost:5001/api/process-prompt', {
+      const response = await fetch('/api/process-prompt', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
