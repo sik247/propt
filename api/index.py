@@ -1,35 +1,25 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+import sys
 import os
-from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+# Add the backend directory to the Python path so we can import main_flask
+backend_path = os.path.join(os.path.dirname(__file__), '..', 'backend')
+sys.path.insert(0, backend_path)
 
-app = Flask(__name__)
-CORS(app)
+try:
+    # Import your main Flask app
+    from main_flask import app
+    print("✅ Successfully imported main_flask app")
+except ImportError as e:
+    print(f"❌ Failed to import main_flask: {e}")
+    # Create a fallback Flask app
+    from flask import Flask, jsonify
+    app = Flask(__name__)
+    
+    @app.route('/')
+    def fallback():
+        return jsonify({"error": "Failed to import main Flask app", "details": str(e)})
 
-@app.route('/')
-def home():
-    return jsonify({
-        "message": "Propt API is running",
-        "status": "healthy",
-        "endpoints": [
-            "/api/health",
-            "/api/generate-prompt",
-            "/api/list-prompts",
-            "/api/load-prompt/<tool_name>"
-        ]
-    })
-
-@app.route('/api/health')
-def health():
-    return jsonify({
-        "status": "healthy", 
-        "message": "Propt API is running",
-        "openai_configured": bool(os.getenv("OPENAI_API_KEY"))
-    })
-
-# This is required for Vercel
+# This is the entry point for Vercel
+# Vercel will call this 'app' variable
 if __name__ == '__main__':
     app.run()

@@ -9,14 +9,23 @@
       }
     },
     {
-      "src": "api/*.py",
-      "use": "@vercel/python"
+      "src": "api/index.py",
+      "use": "@vercel/python",
+      "config": {
+        "maxLambdaSize": "15mb",
+        "runtime": "python3.9",
+        "includeFiles": [
+          "backend/**",
+          "backend/prompts/**",
+          "backend/sample_prompts/**"
+        ]
+      }
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/$1"
+      "dest": "/api/index.py"
     },
     {
       "src": "/assets/(.*)",
@@ -30,5 +39,9 @@
       "src": "/(.*)",
       "dest": "/index.html"
     }
-  ]
+  ],
+  "env": {
+    "FLASK_ENV": "production",
+    "CORS_ALLOW_ORIGIN": "*"
+  }
 }
