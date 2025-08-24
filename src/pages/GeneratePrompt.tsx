@@ -159,7 +159,7 @@ ${content}
     setGeneratedResult(null);
 
     try {
-      const response = await fetch('/generate', {
+      const response = await fetch('/api/generate-prompt', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
