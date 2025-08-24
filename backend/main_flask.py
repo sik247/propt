@@ -21,7 +21,13 @@ else:
 
 # Initialize Flask app
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={
+    r"/api/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
 
 # Initialize OpenAI client
 api_key = os.getenv("OPENAI_API_KEY")
@@ -384,15 +390,32 @@ async def process_prompt_with_agent_thinking(prompt_content: str, industry: str,
 # -----------------------------------
 # API Routes
 # -----------------------------------
-@app.route('/api/generate-prompt', methods=['POST'])
+@app.route('/api/generate-prompt', methods=['POST', 'OPTIONS'])
 def generate_prompt_api():
     """
     API endpoint to generate a new prompt using sequential thinking
     """
+    # Handle CORS preflight request
+    if request.method == 'OPTIONS':
+        response = app.make_default_options_response()
+        response.headers['Access-Control-Allow-Methods'] = 'POST'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return response
+
     try:
+        print(f"📝 Generate prompt request received - Method: {request.method}")
+        print(f"📝 Request headers: {dict(request.headers)}")
+        
+        # Handle POST request
+        if not request.is_json:
+            print("❌ Request is not JSON")
+            return jsonify({"error": "Request must be JSON"}), 400
+            
         data = request.get_json()
+        print(f"📝 Request data: {data}")
         
         if not data:
+            print("❌ No JSON data provided")
             return jsonify({"error": "No JSON data provided"}), 400
             
         industry = data.get('industry', 'general')
