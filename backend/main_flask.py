@@ -315,12 +315,12 @@ def extract_considerations_from_response(response_text):
 
 def make_prompt_editing_agent(industry, usecase, reasoning_effort="medium"):
     # Load prompt templates with templating
-    original_prompt   = load_prompt("prompts/original_prompt.md", industry=industry, usecase=usecase)
-    extraction_prompt = load_prompt("prompts/extraction_prompt.md", industry=industry, usecase=usecase)
-    critique_prompt   = load_prompt("prompts/critique_system.md", industry=industry, usecase=usecase)
-    critique_user     = load_prompt("prompts/critique_user.md", industry=industry, usecase=usecase)
-    revise_prompt     = load_prompt("prompts/revise_prompt.md", industry=industry, usecase=usecase)
-    main_prompt       = load_prompt("prompts/main_prompt.md", industry=industry, usecase=usecase)
+    original_prompt   = load_prompt(os.path.join(os.path.dirname(__file__), "prompts", "original_prompt.md"), industry=industry, usecase=usecase)
+    extraction_prompt = load_prompt(os.path.join(os.path.dirname(__file__), "prompts", "extraction_prompt.md"), industry=industry, usecase=usecase)
+    critique_prompt   = load_prompt(os.path.join(os.path.dirname(__file__), "prompts", "critique_system.md"), industry=industry, usecase=usecase)
+    critique_user     = load_prompt(os.path.join(os.path.dirname(__file__), "prompts", "critique_user.md"), industry=industry, usecase=usecase)
+    revise_prompt     = load_prompt(os.path.join(os.path.dirname(__file__), "prompts", "revise_prompt.md"), industry=industry, usecase=usecase)
+    main_prompt       = load_prompt(os.path.join(os.path.dirname(__file__), "prompts", "main_prompt.md"), industry=industry, usecase=usecase)
 
     MODEL = "gpt-5-mini-2025-08-07"
 
