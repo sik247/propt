@@ -159,19 +159,19 @@ def make_prompt_agent(industry, usecase, model_provider="openai", model="gpt-5-m
     # Choose the appropriate prompt template based on the model
     if model_provider == "openai" and model == "gpt-5-mini-2025-08-07":
         # Use the specialized GPT-5 prompt from generate_prompt.md
-        generate_prompt_template = load_prompt("prompts/generate_prompt.md")
+        generate_prompt_template = load_prompt(os.path.join(os.path.dirname(__file__), "prompts", "generate_prompt.md"))
         print(f"📝 Using generate_prompt.md for GPT-5")
     elif model_provider == "openai" and model == "gpt-4.1":
         # Use the specialized GPT-4.1 prompt from generate_prompt_gpt4.md
-        generate_prompt_template = load_prompt("prompts/generate_prompt_gpt4.md")
+        generate_prompt_template = load_prompt(os.path.join(os.path.dirname(__file__), "prompts", "generate_prompt_gpt4.md"))
         print(f"📝 Using generate_prompt_gpt4.md for GPT-4.1")
     elif model_provider == "claude":
         # Use main prompt for Claude models
-        generate_prompt_template = load_prompt("prompts/main_prompt.md")
+        generate_prompt_template = load_prompt(os.path.join(os.path.dirname(__file__), "prompts", "main_prompt.md"))
         print(f"📝 Using main_prompt.md for Claude")
     else:
         # Default fallback to GPT-5 prompt
-        generate_prompt_template = load_prompt("prompts/generate_prompt.md")
+        generate_prompt_template = load_prompt(os.path.join(os.path.dirname(__file__), "prompts", "generate_prompt.md"))
         print(f"📝 Using generate_prompt.md as fallback")
     
     # Fill the template with industry, usecase, and default region
