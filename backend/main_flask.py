@@ -77,8 +77,7 @@ try:
 except TypeError:
     # Fallback for older versions
     client = OpenAI(
-        api_key=api_key,
-        base_url="https://api.openai.com/v1"  # Explicitly set base URL
+        api_key=api_key
     )
 
 # -----------------------------------
