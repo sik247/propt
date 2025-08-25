@@ -13,7 +13,7 @@
       "use": "@vercel/python",
       "config": {
         "maxLambdaSize": "15mb",
-        "runtime": "python3.9",
+        "runtime": "python3.13",
         "includeFiles": [
           "backend/**",
           "backend/prompts/**",
@@ -25,6 +25,26 @@
   "routes": [
     {
       "src": "/api/(.*)",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/generate-prompt",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/list-prompts",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/load-prompt/(.*)",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/process-prompt",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/analyze-document",
       "dest": "/api/index.py"
     },
     {
