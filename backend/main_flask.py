@@ -174,33 +174,47 @@ def make_prompt_agent(industry, usecase, model_provider="openai", model="gpt-5-m
         generate_prompt_template = load_prompt(os.path.join(os.path.dirname(__file__), "prompts", "generate_prompt.md"))
         print(f"📝 Using generate_prompt.md as fallback")
     
-    # Fill the template with industry, usecase, and default region
-    filled_prompt = generate_prompt_template.format(
-        industry=industry, 
-        usecase=usecase, 
-        region="global"  # Default region if not specified
-    )
-    
-    # Choose the model to use based on provider and model selection
-    api_model = model if model_provider == "openai" else model
-    
-    response = client.responses.create(
-        model=api_model,
-        input=filled_prompt,
-        tools=[{"type": "web_search_preview"}],
-        reasoning={"effort": reasoning_effort}
-    )
-    
-    # Debug: log what the AI actually returned
-    print(f"🤖 AI RESPONSE DEBUG:")
-    print(f"Response object type: {type(response)}")
-    print(f"Output text type: {type(response.output_text)}")
-    print(f"Output text length: {len(response.output_text)}")
-    print(f"Output text content: {repr(response.output_text[:500])}")
-    print("="*60)
-    
-    # Return the response text directly - frontend will handle parsing
-    return response.output_text
+    try:
+        # Fill the template with industry, usecase, and default region
+        filled_prompt = generate_prompt_template.format(
+            industry=industry, 
+            usecase=usecase, 
+            region="global"  # Default region if not specified
+        )
+        
+        # Choose the model to use based on provider and model selection
+        api_model = model if model_provider == "openai" else model
+        
+        # Ensure we have a valid client
+        if not client:
+            raise ValueError("OpenAI client is not initialized")
+            
+        # Make the API call
+        response = client.responses.create(
+            model=api_model,
+            input=filled_prompt,
+            tools=[{"type": "web_search_preview"}],
+            reasoning={"effort": reasoning_effort}
+        )
+        
+        # Debug: log what the AI actually returned
+        print(f"🤖 AI RESPONSE DEBUG:")
+        print(f"Response object type: {type(response)}")
+        print(f"Output text type: {type(response.output_text)}")
+        print(f"Output text length: {len(response.output_text)}")
+        print(f"Output text content: {repr(response.output_text[:500])}")
+        print("="*60)
+        
+        # Validate response
+        if not response or not hasattr(response, 'output_text'):
+            raise ValueError("Invalid response from OpenAI API - missing output_text")
+            
+        # Return the response text directly - frontend will handle parsing
+        return response.output_text
+        
+    except Exception as e:
+        print(f"❌ Error in make_prompt_agent: {str(e)}")
+        raise Exception(f"Failed to generate prompt: {str(e)}")
 
 def extract_final_prompt_from_response(response_text):
     """Extract only the final_prompt section from the structured response"""
@@ -465,46 +479,46 @@ def generate_prompt_api():
         
         print(f"🎨 Generating prompt for {industry} - {usecase} using {model_provider}/{model} with {reasoning_effort} reasoning")
         
-        # Initialize response variable
-        generated_response = None
-        
-        # Generate prompt using the selected model and provider
-        generated_response = make_prompt_agent(industry, usecase, model_provider, model, reasoning_effort)
-        
-        # Debug: log the response to understand its structure
-        print(f"📋 FULL AI RESPONSE:")
-        print("="*50)
-        print(str(generated_response))
-        print("="*50)
-        print(f"📋 Response type: {type(generated_response)}")
-        print(f"📋 Response length: {len(str(generated_response))}")
-        
-        # TEMPORARY: Just return the raw response to see what we're getting
-        print(f"🔍 RAW RESPONSE DEBUG:")
-        print(f"Type: {type(generated_response)}")
-        print(f"Length: {len(str(generated_response))}")
-        print(f"Content: {repr(str(generated_response))}")
-        print("="*80)
-        
-        # For now, just use the response as-is
-        final_prompt_only = str(generated_response).strip()
-        planning_content = extract_planning_from_response(generated_response)
-        considerations_content = extract_considerations_from_response(generated_response)
-        
-        # Return the generated prompt with separated sections
-        return jsonify({
-            "success": True,
-            "final_prompt": final_prompt_only,  # Only the System prompt content
-            "planning": planning_content,  # For planning button
-            "considerations": considerations_content,  # For considerations button
-            "generated_prompt": final_prompt_only,  # Fallback for compatibility
-            "industry": industry,
-            "usecase": usecase,
-            "context": user_context,
-            "model_provider": model_provider,
-            "model": model,
-            "method": f"{model} with sequential thinking"
-        })
+        try:
+            # Generate prompt using the selected model and provider
+            generated_response = make_prompt_agent(industry, usecase, model_provider, model, reasoning_effort)
+            
+            # Debug: log the response to understand its structure
+            print(f"📋 FULL AI RESPONSE:")
+            print("="*50)
+            print(str(generated_response))
+            print("="*50)
+            print(f"📋 Response type: {type(generated_response)}")
+            print(f"📋 Response length: {len(str(generated_response))}")
+            
+            # For now, just use the response as-is
+            final_prompt_only = str(generated_response).strip()
+            planning_content = extract_planning_from_response(generated_response)
+            considerations_content = extract_considerations_from_response(generated_response)
+            
+            # Return the generated prompt with separated sections
+            return jsonify({
+                "success": True,
+                "final_prompt": final_prompt_only,  # Only the System prompt content
+                "planning": planning_content,  # For planning button
+                "considerations": considerations_content,  # For considerations button
+                "generated_prompt": final_prompt_only,  # Fallback for compatibility
+                "industry": industry,
+                "usecase": usecase,
+                "context": user_context,
+                "model_provider": model_provider,
+                "model": model,
+                "method": f"{model} with sequential thinking"
+            })
+        except Exception as agent_error:
+            print(f"❌ Error in make_prompt_agent: {agent_error}")
+            return jsonify({
+                "success": False,
+                "error": str(agent_error),
+                "error_type": "agent_error",
+                "industry": industry,
+                "usecase": usecase
+            }), 500
         
     except Exception as parse_error:
             print(f"⚠️ Could not parse structured response: {parse_error}")
