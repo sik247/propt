@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 # Configure CORS
 CORS(app, resources={
-    r"/api/*": {
+    r"/*": {  # Match all routes
         "origins": "*",
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization", "Accept"],
@@ -441,6 +441,7 @@ async def process_prompt_with_agent_thinking(prompt_content: str, industry: str,
 # -----------------------------------
 # API Routes
 # -----------------------------------
+@app.route('/generate-prompt', methods=['POST', 'OPTIONS'])
 @app.route('/api/generate-prompt', methods=['POST', 'OPTIONS'])
 def generate_prompt_api():
     """
@@ -451,6 +452,7 @@ def generate_prompt_api():
         response = app.make_default_options_response()
         response.headers['Access-Control-Allow-Methods'] = 'POST'
         response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        response.headers['Access-Control-Allow-Origin'] = '*'
         return response
 
     try:
