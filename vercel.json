@@ -27,7 +27,14 @@
       "src": "/api/(.*)",
       "dest": "/api/index.py"
     },
-
+    {
+      "src": "/api/generate-prompt",
+      "dest": "/api/index.py"
+    },
+    {
+      "src": "/generate-prompt",
+      "dest": "/api/index.py"
+    },
     {
       "src": "/list-prompts",
       "dest": "/api/index.py"
