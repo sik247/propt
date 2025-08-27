@@ -17,9 +17,13 @@ const GeneratePrompt = () => {
   const { user } = useAuth();
   const { usage, incrementUsage, isAuthenticated, remainingAttempts } = useUsageTracking();
   const [isGenerating, setIsGenerating] = useState(false);
-  const [industry, setIndustry] = useState("finance");
-  const [usecase, setUsecase] = useState("report generation");
+  const [industry, setIndustry] = useState("technology");
+  const [usecase, setUsecase] = useState("content creation");
   const [promptDescription, setPromptDescription] = useState("");
+  const [workflow, setWorkflow] = useState("");
+  const [inputFormat, setInputFormat] = useState("");
+  const [outputFormat, setOutputFormat] = useState("");
+  const [currentAgents, setCurrentAgents] = useState("");
   const [generatedResult, setGeneratedResult] = useState<any>(null);
   const [selectedCompany, setSelectedCompany] = useState("openai");
   const [selectedModel, setSelectedModel] = useState("gpt-5-mini-2025-08-07");
@@ -168,6 +172,11 @@ ${content}
           industry: industry,
           use_case: usecase,
           context: promptDescription,
+          workflow: workflow,
+          input_format: inputFormat,
+          output_format: outputFormat,
+          current_agents: currentAgents,
+          document_content: documentContent, // Include uploaded document content
           model_provider: selectedCompany,
           model: selectedModel,
           reasoning_effort: reasoningEffort
@@ -470,7 +479,7 @@ ${content}
                     id="industry"
                     value={industry}
                     onChange={(e) => setIndustry(e.target.value)}
-                    placeholder="e.g., finance, healthcare, education"
+                    placeholder="e.g., technology, healthcare, education"
                     className="w-full"
                   />
                 </div>
@@ -480,27 +489,85 @@ ${content}
                     id="usecase"
                     value={usecase}
                     onChange={(e) => setUsecase(e.target.value)}
-                    placeholder="e.g., report generation, customer service"
+                    placeholder="e.g., content creation, data analysis, customer service"
                     className="w-full"
                   />
                 </div>
               </div>
 
-              {/* Prompt Description */}
-              <div className="space-y-2">
-                <Label htmlFor="description" className="text-sm font-medium">
-                  What should this prompt be about?
-                </Label>
-                <Textarea
-                  id="description"
-                  value={promptDescription}
-                  onChange={(e) => setPromptDescription(e.target.value)}
-                  placeholder="Describe what you want the prompt to do. For example: 'Create a prompt that helps generate financial reports with key metrics and insights for quarterly reviews'"
-                  className="min-h-[120px] resize-none"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Be specific about the task, desired output format, and any special requirements.
-                </p>
+              {/* Enhanced Context Gathering */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-foreground">Context & Requirements</h3>
+                
+                {/* Main Description */}
+                <div className="space-y-2">
+                  <Label htmlFor="description" className="text-sm font-medium">
+                    What should this prompt be about? *
+                  </Label>
+                  <Textarea
+                    id="description"
+                    value={promptDescription}
+                    onChange={(e) => setPromptDescription(e.target.value)}
+                    placeholder="Describe what you want the prompt to do. For example: 'Create a prompt that helps generate engaging blog content with SEO optimization and clear call-to-actions for marketing campaigns'"
+                    className="min-h-[100px] resize-none"
+                  />
+                </div>
+
+                {/* Workflow */}
+                <div className="space-y-2">
+                  <Label htmlFor="workflow" className="text-sm font-medium">
+                    Workflow or Process (Optional)
+                  </Label>
+                  <Textarea
+                    id="workflow"
+                    value={workflow}
+                    onChange={(e) => setWorkflow(e.target.value)}
+                    placeholder="Describe your typical workflow or process. For example: 'Research topic → Create outline → Write draft → Review for SEO → Final edit'"
+                    className="min-h-[80px] resize-none"
+                  />
+                </div>
+
+                {/* Input/Output Format */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="input-format" className="text-sm font-medium">
+                      Input Format (Optional)
+                    </Label>
+                    <Input
+                      id="input-format"
+                      value={inputFormat}
+                      onChange={(e) => setInputFormat(e.target.value)}
+                      placeholder="e.g., Topic + target audience + length requirements"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="output-format" className="text-sm font-medium">
+                      Output Format (Optional)
+                    </Label>
+                    <Input
+                      id="output-format"
+                      value={outputFormat}
+                      onChange={(e) => setOutputFormat(e.target.value)}
+                      placeholder="e.g., Structured markdown, JSON, bullet points"
+                    />
+                  </div>
+                </div>
+
+                {/* Current Agents */}
+                <div className="space-y-2">
+                  <Label htmlFor="current-agents" className="text-sm font-medium">
+                    Current Agents or Tools (Optional)
+                  </Label>
+                  <Input
+                    id="current-agents"
+                    value={currentAgents}
+                    onChange={(e) => setCurrentAgents(e.target.value)}
+                    placeholder="e.g., ChatGPT, Claude, Jasper, custom tools, workflow software"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    List any AI agents, tools, or platforms you currently use in your workflow.
+                  </p>
+                </div>
               </div>
 
               {/* API Key Notice */}
@@ -529,10 +596,17 @@ ${content}
                 size="lg"
               >
                 {isGenerating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Generating with {modelOptions[selectedCompany as keyof typeof modelOptions].find(m => m.id === selectedModel)?.name}...
-                  </>
+                  <div className="flex items-center justify-center">
+                    <div className="relative">
+                      <Loader2 className="w-5 h-5 mr-3 animate-spin text-white" />
+                      <div className="absolute top-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
+                        <span className="text-white text-sm">
+                          Generating with {modelOptions[selectedCompany as keyof typeof modelOptions].find(m => m.id === selectedModel)?.name}
+                        </span>
+                        <span className="animate-pulse">...</span>
+                      </div>
+                    </div>
+                  </div>
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4 mr-2" />
@@ -575,9 +649,19 @@ ${content}
                             🎯 Final System Prompt
                           </Label>
                           <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                            <pre className="whitespace-pre-wrap text-sm font-mono max-h-96 overflow-y-auto">
-                              {generatedResult.final_prompt}
-                            </pre>
+                            <div className="prose prose-sm max-w-none dark:prose-invert">
+                              <div className="markdown-body" dangerouslySetInnerHTML={{ 
+                                __html: generatedResult.final_prompt
+                                  .split('\n')
+                                  .map(line => {
+                                    if (line.startsWith('#')) return line; // Keep headers as is
+                                    if (line.startsWith('- ')) return line; // Keep list items as is
+                                    if (line.trim() === '') return '\n'; // Keep empty lines
+                                    return line + '  '; // Add two spaces for line breaks
+                                  })
+                                  .join('\n')
+                              }} />
+                            </div>
                           </div>
                           <div className="flex gap-2 flex-wrap">
                             <Button 
@@ -606,58 +690,11 @@ ${content}
                             >
                               Refine This Prompt
                             </Button>
-                            {generatedResult.planning && (
-                              <Button 
-                                onClick={() => setShowPlanning(!showPlanning)}
-                                variant="outline"
-                                size="sm"
-                                className="flex items-center gap-2"
-                              >
-                                <FileText className="w-4 h-4" />
-                                {showPlanning ? 'Hide' : 'Show'} Planning Steps
-                              </Button>
-                            )}
-                            {generatedResult.considerations && (
-                              <Button 
-                                onClick={() => setShowConsiderations(!showConsiderations)}
-                                variant="outline"
-                                size="sm"
-                                className="flex items-center gap-2"
-                              >
-                                <FileText className="w-4 h-4" />
-                                {showConsiderations ? 'Hide' : 'Show'} Further Steps
-                              </Button>
-                            )}
+
                           </div>
                         </div>
 
-                        {/* Planning Steps Section - Collapsible */}
-                        {showPlanning && generatedResult.planning && (
-                          <div className="space-y-2">
-                            <Label className="text-lg font-semibold text-blue-800 flex items-center gap-2">
-                              📋 Planning Steps
-                            </Label>
-                            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                              <pre className="whitespace-pre-wrap text-sm max-h-64 overflow-y-auto">
-                                {generatedResult.planning}
-                              </pre>
-                            </div>
-                          </div>
-                        )}
 
-                        {/* Further Considerations Section - Collapsible */}
-                        {showConsiderations && generatedResult.considerations && (
-                          <div className="space-y-2">
-                            <Label className="text-lg font-semibold text-purple-800 flex items-center gap-2">
-                              ⚙️ Further Considerations
-                            </Label>
-                            <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-                              <pre className="whitespace-pre-wrap text-sm max-h-64 overflow-y-auto">
-                                {generatedResult.considerations}
-                              </pre>
-                            </div>
-                          </div>
-                        )}
 
 
                       </>

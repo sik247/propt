@@ -1,5 +1,6 @@
 import asyncio
 import os
+import time
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any
@@ -58,12 +59,49 @@ def internal_error(error):
     logger.error(f"500 Error: {error}")
     return jsonify({"error": "Internal server error", "details": str(error)}), 500
 
+# Simple in-memory tracking for demo (use Redis/DB for production)
+attempt_tracker = {}
+
+def get_client_ip():
+    """Get client IP address, considering proxies"""
+    if request.headers.getlist("X-Forwarded-For"):
+        return request.headers.getlist("X-Forwarded-For")[0].split(',')[0].strip()
+    return request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+
+def check_rate_limit(action_type="generate"):
+    """Check if client has exceeded rate limits"""
+    client_ip = get_client_ip()
+    current_time = time.time()
+    
+    # Clean old entries (older than 24 hours)
+    cutoff_time = current_time - 86400  # 24 hours
+    if client_ip in attempt_tracker:
+        attempt_tracker[client_ip] = [
+            timestamp for timestamp in attempt_tracker[client_ip] 
+            if timestamp > cutoff_time
+        ]
+    
+    # Check current attempts
+    attempts = attempt_tracker.get(client_ip, [])
+    max_attempts = 2 if action_type == "generate" else 1
+    
+    if len(attempts) >= max_attempts:
+        return False, len(attempts)
+    
+    # Record this attempt
+    if client_ip not in attempt_tracker:
+        attempt_tracker[client_ip] = []
+    attempt_tracker[client_ip].append(current_time)
+    
+    return True, len(attempts) + 1
+
 # Add request logging
 @app.before_request
 def log_request_info():
     logger.debug("Request Headers: %s", dict(request.headers))
     logger.debug("Request Method: %s", request.method)
     logger.debug("Request Path: %s", request.path)
+    logger.debug("Client IP: %s", get_client_ip())
     if request.is_json:
         logger.debug("Request JSON: %s", request.get_json())
 
@@ -153,7 +191,7 @@ def load_prompt(tool_name, prompt_file=None, base_path="sample_prompts", **kwarg
 # -----------------------------------
 # Core Agent Functions
 # -----------------------------------
-def make_prompt_agent(industry, usecase, model_provider="openai", model="gpt-5-mini-2025-08-07", reasoning_effort="medium"):
+def make_prompt_agent(industry, usecase, model_provider="openai", model="gpt-5-mini-2025-08-07", reasoning_effort="medium", user_context="", workflow="", input_format="", output_format="", current_agents="", document_content=""):
     
     # Choose the appropriate prompt template based on the model
     if model_provider == "openai" and model == "gpt-5-mini-2025-08-07":
@@ -174,11 +212,27 @@ def make_prompt_agent(industry, usecase, model_provider="openai", model="gpt-5-m
         print(f"📝 Using generate_prompt.md as fallback")
     
     try:
-        # Fill the template with industry, usecase, and default region
+        # Build comprehensive additional context from user input and document
+        additional_context = ""
+        if user_context:
+            additional_context += f"\n\nUser Context:\n{user_context}"
+        if workflow:
+            additional_context += f"\n\nWorkflow/Process:\n{workflow}"
+        if input_format:
+            additional_context += f"\n\nExpected Input Format:\n{input_format}"
+        if output_format:
+            additional_context += f"\n\nDesired Output Format:\n{output_format}"
+        if current_agents:
+            additional_context += f"\n\nCurrently Used Agents/Tools:\n{current_agents}"
+        if document_content:
+            additional_context += f"\n\nDocument Content (for reference):\n{document_content[:2000]}..."  # Limit to avoid token overflow
+        
+        # Fill the template with industry, usecase, and additional context
         filled_prompt = generate_prompt_template.format(
             industry=industry, 
             usecase=usecase, 
-            region="global"  # Default region if not specified
+            region="global",  # Default region if not specified
+            additional_context=additional_context if additional_context else "No additional context provided."
         )
         
         # Choose the model to use based on provider and model selection
@@ -471,9 +525,26 @@ def generate_prompt_api():
             print("❌ No JSON data provided")
             return jsonify({"error": "No JSON data provided"}), 400
             
-        industry = data.get('industry', 'general')
-        usecase = data.get('use_case', 'general')
+        # Check rate limiting for non-authenticated users
+        # For now, we'll assume all requests are from non-authenticated users
+        # In production, you'd check if user has valid auth token
+        can_proceed, current_attempts = check_rate_limit("generate")
+        if not can_proceed:
+            return jsonify({
+                "success": False,
+                "error": "Rate limit exceeded. You have used your 2 free attempts for today. Please try again tomorrow or sign up for unlimited access.",
+                "rate_limited": True,
+                "attempts_used": current_attempts
+            }), 429
+            
+        industry = data.get('industry', 'technology')
+        usecase = data.get('use_case', 'content creation')
         user_context = data.get('context', '')
+        workflow = data.get('workflow', '')
+        input_format = data.get('input_format', '')
+        output_format = data.get('output_format', '')
+        current_agents = data.get('current_agents', '')
+        document_content = data.get('document_content', '')  # New: document content
         model_provider = data.get('model_provider', 'openai')
         model = data.get('model', 'gpt-5-mini-2025-08-07')
         reasoning_effort = data.get('reasoning_effort', 'medium')
@@ -482,7 +553,7 @@ def generate_prompt_api():
         
         try:
             # Generate prompt using the selected model and provider
-            generated_response = make_prompt_agent(industry, usecase, model_provider, model, reasoning_effort)
+            generated_response = make_prompt_agent(industry, usecase, model_provider, model, reasoning_effort, user_context, workflow, input_format, output_format, current_agents, document_content)
             
             # Debug: log the response to understand its structure
             print(f"📋 FULL AI RESPONSE:")
@@ -557,8 +628,8 @@ def process_prompt_api():
             return jsonify({"error": "No JSON data provided"}), 400
             
         prompt_content = data.get('content', '')
-        industry = data.get('industry', 'general')
-        usecase = data.get('use_case', 'general')
+        industry = data.get('industry', 'technology')
+        usecase = data.get('use_case', 'content creation')
         
         if not prompt_content.strip():
             return jsonify({"error": "Prompt content is required"}), 400

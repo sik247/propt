@@ -13,8 +13,8 @@ const UploadRefine = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processResult, setProcessResult] = useState<any>(null);
   const [promptValue, setPromptValue] = useState("");
-  const [industryValue, setIndustryValue] = useState("finance");
-  const [usecaseValue, setUsecaseValue] = useState("report generation");
+  const [industryValue, setIndustryValue] = useState("technology");
+  const [usecaseValue, setUsecaseValue] = useState("content creation");
 
   // Utility function to download content as markdown
   const downloadAsMarkdown = (content: string, filename: string) => {
@@ -48,11 +48,16 @@ ${content}
     }
   }, [location]);
 
-  // Handle prompt passed from other pages
+  // Handle prompt passed from other pages and auto-process
   useEffect(() => {
     if (location.state?.promptToRefine) {
       setPromptValue(location.state.promptToRefine);
       toast.success("Prompt loaded for refinement!");
+      
+      // Auto-process the prompt after a short delay to ensure state is updated
+      setTimeout(() => {
+        handleProcessPrompt();
+      }, 100);
     }
   }, [location.state]);
 
@@ -149,7 +154,7 @@ ${content}
                     id="industry"
                     value={industryValue}
                     onChange={(e) => setIndustryValue(e.target.value)}
-                    placeholder="e.g., finance, healthcare, education"
+                    placeholder="e.g., technology, healthcare, education"
                   />
                 </div>
                 <div className="space-y-2">
@@ -158,7 +163,7 @@ ${content}
                     id="usecase"
                     value={usecaseValue}
                     onChange={(e) => setUsecaseValue(e.target.value)}
-                    placeholder="e.g., report generation, customer service"
+                    placeholder="e.g., content creation, data analysis, customer service"
                   />
                 </div>
               </div>
