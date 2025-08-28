@@ -13,8 +13,8 @@ const UploadRefine = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [processResult, setProcessResult] = useState<any>(null);
   const [promptValue, setPromptValue] = useState("");
-  const [industryValue, setIndustryValue] = useState("technology");
-  const [usecaseValue, setUsecaseValue] = useState("content creation");
+  const [industryValue, setIndustryValue] = useState("Finance");
+  const [usecaseValue, setUsecaseValue] = useState("ex: Stock Research");
 
   // Utility function to download content as markdown
   const downloadAsMarkdown = (content: string, filename: string) => {
@@ -154,7 +154,7 @@ ${content}
                     id="industry"
                     value={industryValue}
                     onChange={(e) => setIndustryValue(e.target.value)}
-                    placeholder="e.g., technology, healthcare, education"
+                    placeholder="e.g., Finance, Healthcare, Technology"
                   />
                 </div>
                 <div className="space-y-2">
@@ -163,7 +163,7 @@ ${content}
                     id="usecase"
                     value={usecaseValue}
                     onChange={(e) => setUsecaseValue(e.target.value)}
-                    placeholder="e.g., content creation, data analysis, customer service"
+                    placeholder="e.g., Stock Research, Risk Analysis, Financial Reporting"
                   />
                 </div>
               </div>

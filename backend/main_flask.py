@@ -146,7 +146,6 @@ class RevisedPromptOutput(BaseModel):
 class GenereatedPrompt(BaseModel):
     planning:str
     final_prompt: str
-    considerations: str
 # -----------------------------------
 # Utility Functions
 # -----------------------------------
@@ -191,7 +190,38 @@ def load_prompt(tool_name, prompt_file=None, base_path="sample_prompts", **kwarg
 # -----------------------------------
 # Core Agent Functions
 # -----------------------------------
-def make_prompt_agent(industry, usecase, model_provider="openai", model="gpt-5-mini-2025-08-07", reasoning_effort="medium", user_context="", workflow="", input_format="", output_format="", current_agents="", document_content=""):
+def summarize_document(document_content, reasoning_effort="medium"):
+    """Summarize document content using GPT-5"""
+    try:
+        summarization_prompt = f"""
+        Please provide a concise summary of the key points from this document that would be relevant for prompt engineering:
+
+        Document Content:
+        {document_content[:3000]}...
+
+        Focus on:
+        - Domain-specific requirements
+        - Standards or guidelines mentioned
+        - Key terminology or concepts
+        - Workflow or process details
+        - Success criteria or metrics
+
+        Provide a structured summary in 3-5 bullet points.
+        """
+        
+        # Use the same client for consistency
+        response = client.responses.create(
+            model="gpt-5-mini-2025-08-07",
+            input=summarization_prompt,
+            reasoning={"effort": reasoning_effort}
+        )
+        
+        return response.output_text.strip()
+    except Exception as e:
+        print(f"⚠️ Error summarizing document: {e}")
+        return f"Document provided (summary unavailable): {document_content[:200]}..."
+
+def make_prompt_agent(industry, usecase, region="global", tasks=[], document="", input_format="", output_format="", model_provider="openai", model="gpt-5-mini-2025-08-07", reasoning_effort="medium"):
     
     # Choose the appropriate prompt template based on the model
     if model_provider == "openai" and model == "gpt-5-mini-2025-08-07":
@@ -212,27 +242,36 @@ def make_prompt_agent(industry, usecase, model_provider="openai", model="gpt-5-m
         print(f"📝 Using generate_prompt.md as fallback")
     
     try:
-        # Build comprehensive additional context from user input and document
-        additional_context = ""
-        if user_context:
-            additional_context += f"\n\nUser Context:\n{user_context}"
-        if workflow:
-            additional_context += f"\n\nWorkflow/Process:\n{workflow}"
-        if input_format:
-            additional_context += f"\n\nExpected Input Format:\n{input_format}"
-        if output_format:
-            additional_context += f"\n\nDesired Output Format:\n{output_format}"
-        if current_agents:
-            additional_context += f"\n\nCurrently Used Agents/Tools:\n{current_agents}"
-        if document_content:
-            additional_context += f"\n\nDocument Content (for reference):\n{document_content[:2000]}..."  # Limit to avoid token overflow
+        # Format tasks as a structured list
+        tasks_formatted = ""
+        if tasks:
+            tasks_formatted = "Tasks to accomplish:\n" + "\n".join([f"- {task}" for task in tasks])
+        else:
+            tasks_formatted = "No specific tasks defined"
         
-        # Fill the template with industry, usecase, and additional context
+        # Format input/output formats for template
+        input_format_text = ""
+        output_format_text = ""
+        
+        if input_format:
+            input_format_text = f"Expected Input Format:\n```json\n{input_format}\n```"
+        else:
+            input_format_text = "No specific input format specified"
+            
+        if output_format:
+            output_format_text = f"Desired Output Format:\n```json\n{output_format}\n```"
+        else:
+            output_format_text = "No specific output format specified"
+        
+        # Fill the template with new parameter structure
         filled_prompt = generate_prompt_template.format(
             industry=industry, 
             usecase=usecase, 
-            region="global",  # Default region if not specified
-            additional_context=additional_context if additional_context else "No additional context provided."
+            region=region,
+            tasks=tasks_formatted,
+            document=document if document else "No document provided",
+            input_format=input_format_text,
+            output_format=output_format_text
         )
         
         # Choose the model to use based on provider and model selection
@@ -395,10 +434,9 @@ def make_prompt_editing_agent(industry, usecase, reasoning_effort="medium"):
         name="search_agent",
         model=MODEL,
         instructions=f"""
-        You are a **Web-Search Assistant** for **{industry}**.  
+        You are a **Web-Search Assistant** for **{industry}** and **{usecase}**.  
         When invoked, call the `web.search_query` tool with a concise, focused query  
-        to retrieve up-to-date domain facts that are relevant to prompt engineering.  
-        Return only JSON: {{ "query": "...", "results": [{{title, snippet, url}}...] }}
+        to retrieve up-to-date domain facts that are necessary to create the optimal prompt for {usecase}
         """,
         reasoning_effort=reasoning_effort
     )
@@ -537,14 +575,14 @@ def generate_prompt_api():
                 "attempts_used": current_attempts
             }), 429
             
-        industry = data.get('industry', 'technology')
-        usecase = data.get('use_case', 'content creation')
+        industry = data.get('industry', 'Finance')
+        usecase = data.get('use_case', 'ex: Stock Research')
+        region = data.get('region', 'global')
         user_context = data.get('context', '')
-        workflow = data.get('workflow', '')
-        input_format = data.get('input_format', '')
-        output_format = data.get('output_format', '')
-        current_agents = data.get('current_agents', '')
         document_content = data.get('document_content', '')  # New: document content
+        tasks = data.get('tasks', [])  # Array of tasks
+        input_format = data.get('input_format', '')  # JSON input format
+        output_format = data.get('output_format', '')  # JSON output format
         model_provider = data.get('model_provider', 'openai')
         model = data.get('model', 'gpt-5-mini-2025-08-07')
         reasoning_effort = data.get('reasoning_effort', 'medium')
@@ -552,8 +590,13 @@ def generate_prompt_api():
         print(f"🎨 Generating prompt for {industry} - {usecase} using {model_provider}/{model} with {reasoning_effort} reasoning")
         
         try:
+            # Summarize document if provided
+            document_summary = ""
+            if document_content:
+                document_summary = summarize_document(document_content, reasoning_effort)
+            
             # Generate prompt using the selected model and provider
-            generated_response = make_prompt_agent(industry, usecase, model_provider, model, reasoning_effort, user_context, workflow, input_format, output_format, current_agents, document_content)
+            generated_response = make_prompt_agent(industry, usecase, region, tasks, document_summary, input_format, output_format, model_provider, model, reasoning_effort)
             
             # Debug: log the response to understand its structure
             print(f"📋 FULL AI RESPONSE:")
@@ -566,14 +609,14 @@ def generate_prompt_api():
             # For now, just use the response as-is
             final_prompt_only = str(generated_response).strip()
             planning_content = extract_planning_from_response(generated_response)
-            considerations_content = extract_considerations_from_response(generated_response)
             
             # Return the generated prompt with separated sections
             return jsonify({
                 "success": True,
                 "final_prompt": final_prompt_only,  # Only the System prompt content
-                "planning": planning_content,  # For planning button
-                "considerations": considerations_content,  # For considerations button
+                "planning_content": planning_content,  # For planning button
+                # Remove considerations_content if not defined
+                # "considerations_content": considerations_content,
                 "generated_prompt": final_prompt_only,  # Fallback for compatibility
                 "industry": industry,
                 "usecase": usecase,
@@ -628,8 +671,8 @@ def process_prompt_api():
             return jsonify({"error": "No JSON data provided"}), 400
             
         prompt_content = data.get('content', '')
-        industry = data.get('industry', 'technology')
-        usecase = data.get('use_case', 'content creation')
+        industry = data.get('industry', 'Finance')
+        usecase = data.get('use_case', 'ex: Stock Research')
         
         if not prompt_content.strip():
             return jsonify({"error": "Prompt content is required"}), 400

@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, Sparkles, CheckCircle, FileText, Download, Key, Info, Upload, BarChart3, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, CheckCircle, FileText, Download, Key, Info, Upload, BarChart3, AlertTriangle, Plus, X } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { useUsageTracking } from '@/hooks/useUsageTracking';
@@ -17,13 +17,16 @@ const GeneratePrompt = () => {
   const { user } = useAuth();
   const { usage, incrementUsage, isAuthenticated, remainingAttempts } = useUsageTracking();
   const [isGenerating, setIsGenerating] = useState(false);
-  const [industry, setIndustry] = useState("technology");
-  const [usecase, setUsecase] = useState("content creation");
+  const [industry, setIndustry] = useState("Finance");
+  const [usecase, setUsecase] = useState("ex: Stock Research");
   const [promptDescription, setPromptDescription] = useState("");
-  const [workflow, setWorkflow] = useState("");
+  const [region, setRegion] = useState("global");
+  const [customRegion, setCustomRegion] = useState("");
+  const [tasks, setTasks] = useState<string[]>([""]);
   const [inputFormat, setInputFormat] = useState("");
   const [outputFormat, setOutputFormat] = useState("");
-  const [currentAgents, setCurrentAgents] = useState("");
+  const [showInputFormat, setShowInputFormat] = useState(false);
+  const [showOutputFormat, setShowOutputFormat] = useState(false);
   const [generatedResult, setGeneratedResult] = useState<any>(null);
   const [selectedCompany, setSelectedCompany] = useState("openai");
   const [selectedModel, setSelectedModel] = useState("gpt-5-mini-2025-08-07");
@@ -35,6 +38,7 @@ const GeneratePrompt = () => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [documentContent, setDocumentContent] = useState("");
+  const [links, setLinks] = useState<string[]>([""]);
 
   // Listen for custom events to show auth modal
   useEffect(() => {
@@ -60,6 +64,75 @@ const GeneratePrompt = () => {
   const handleCompanyChange = (company: string) => {
     setSelectedCompany(company);
     setSelectedModel(modelOptions[company as keyof typeof modelOptions][0].id);
+  };
+
+  // JSON format validation
+  const isValidJSON = (str: string) => {
+    if (!str.trim()) return true; // Empty is valid
+    try {
+      JSON.parse(str);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  // Handle format examples
+  const setInputFormatExample = () => {
+    setInputFormat(`{
+  "symbol": "string",
+  "timeframe": "string",
+  "metrics": ["revenue", "profit", "debt"],
+  "analysis_type": "fundamental | technical"
+}`);
+  };
+
+  const setOutputFormatExample = () => {
+    setOutputFormat(`{
+  "recommendation": "buy | hold | sell",
+  "confidence_score": "number (0-100)",
+  "key_metrics": {
+    "pe_ratio": "number",
+    "revenue_growth": "number",
+    "debt_ratio": "number"
+  },
+  "analysis_summary": "string",
+  "risk_factors": ["string"],
+  "price_target": "number"
+}`);
+  };
+
+  // Handle tasks management
+  const addTask = () => {
+    setTasks([...tasks, ""]);
+  };
+
+  const updateTask = (index: number, value: string) => {
+    const newTasks = [...tasks];
+    newTasks[index] = value;
+    setTasks(newTasks);
+  };
+
+  const removeTask = (index: number) => {
+    if (tasks.length > 1) {
+      setTasks(tasks.filter((_, i) => i !== index));
+    }
+  };
+
+  const addLink = () => {
+    setLinks([...links, ""]);
+  };
+
+  const updateLink = (index: number, value: string) => {
+    const newLinks = [...links];
+    newLinks[index] = value;
+    setLinks(newLinks);
+  };
+
+  const removeLink = (index: number) => {
+    if (links.length > 1) {
+      setLinks(links.filter((_, i) => i !== index));
+    }
   };
 
   // Handle file upload
@@ -172,10 +245,10 @@ ${content}
           industry: industry,
           use_case: usecase,
           context: promptDescription,
-          workflow: workflow,
-          input_format: inputFormat,
-          output_format: outputFormat,
-          current_agents: currentAgents,
+          region: region === 'custom' ? customRegion : region,
+          tasks: tasks.filter(task => task.trim() !== ""), // Filter out empty tasks
+          input_format: inputFormat && isValidJSON(inputFormat) ? inputFormat : "",
+          output_format: outputFormat && isValidJSON(outputFormat) ? outputFormat : "",
           document_content: documentContent, // Include uploaded document content
           model_provider: selectedCompany,
           model: selectedModel,
@@ -209,124 +282,38 @@ ${content}
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-r from-blue-50 to-blue-100">
       {/* Header */}
-      <div className="border-b border-border bg-card">
+      <div className="border-b border-gray-200 bg-white shadow-sm">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center gap-4">
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={() => navigate('/')}
-              className="flex items-center gap-2"
+              onClick={() => navigate('/')} 
+              className="flex items-center gap-2 text-blue-600 hover:text-blue-800"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to Home
             </Button>
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-900 to-orange-500 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-green-500 rounded-lg flex items-center justify-center">
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-foreground">Generate New Prompt</h1>
-                <p className="text-sm text-muted-foreground">Create a custom prompt with AI assistance</p>
+                <h1 className="text-xl font-semibold text-gray-800">Generate New Prompt</h1>
+                <p className="text-sm text-gray-500">Create a custom prompt with AI assistance</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Authentication & Instructions */}
-      <div className="container mx-auto px-6 py-4 max-w-4xl">
-        {/* Free Trial Status for Non-Signed Users - HIDDEN for creator */}
-        {false && !user && (
-          <Alert className="mb-4 border-blue-200 bg-blue-50">
-            <Info className="h-4 w-4" />
-            <AlertDescription>
-              {!hasUsedFreeTrial ? (
-                <div className="space-y-2">
-                  <div className="font-medium">🎉 Free Trial Available!</div>
-                  <div>You can generate one prompt for free. After that, please sign up to continue or enter your own API keys in Settings.</div>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="font-medium">Free Trial Used</div>
-                  <div>
-                    To continue generating prompts, please{' '}
-                    <Button variant="link" className="p-0 h-auto font-medium" onClick={() => setShowAuthPrompt(true)}>
-                      sign up for an account
-                    </Button>
-                    {' '}or go to{' '}
-                    <Button variant="link" className="p-0 h-auto font-medium" onClick={() => navigate('/settings')}>
-                      Settings
-                    </Button>
-                    {' '}to enter your own API keys.
-                  </div>
-                </div>
-              )}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* API Key Instructions - HIDDEN for creator */}
-        {false && (
-          <Alert className="mb-4 border-amber-200 bg-amber-50">
-            <Key className="h-4 w-4" />
-            <AlertDescription>
-              <div className="space-y-2">
-                <div className="font-medium">💡 Using Your Own API Keys</div>
-                <div>
-                  For unlimited generations, you can use your own OpenAI API keys. 
-                  Go to{' '}
-                  <Button variant="link" className="p-0 h-auto font-medium" onClick={() => navigate('/settings')}>
-                    Settings → API Keys
-                  </Button>
-                  {' '}to configure them.
-                </div>
-              </div>
-            </AlertDescription>
-          </Alert>
-        )}
-      </div>
-
       {/* Main Content */}
       <div className="container mx-auto px-6 py-8 max-w-4xl">
         <div className="space-y-8">
-          
-          {/* Usage Indicator for Non-Authenticated Users */}
-          {!isAuthenticated && (
-            <Alert className={usage.hasReachedLimit ? "border-red-200 bg-red-50" : "border-blue-200 bg-blue-50"}>
-              <AlertTriangle className={`h-4 w-4 ${usage.hasReachedLimit ? "text-red-600" : "text-blue-600"}`} />
-              <AlertDescription className={usage.hasReachedLimit ? "text-red-800" : "text-blue-800"}>
-                {usage.hasReachedLimit ? (
-                  <span>
-                    <strong>Free limit reached!</strong> You've used your free prompt generation. 
-                    <Button 
-                      variant="link" 
-                      className="h-auto p-0 ml-1 text-red-700 underline"
-                      onClick={() => setShowAuthPrompt(true)}
-                    >
-                      Sign up for unlimited access
-                    </Button>
-                  </span>
-                ) : (
-                  <span>
-                    <strong>{remainingAttempts} free attempt remaining.</strong> 
-                    <Button 
-                      variant="link" 
-                      className="h-auto p-0 ml-1 text-blue-700 underline"
-                      onClick={() => setShowAuthPrompt(true)}
-                    >
-                      Sign up for unlimited access
-                    </Button>
-                  </span>
-                )}
-              </AlertDescription>
-            </Alert>
-          )}
-
           {/* Configuration Section */}
-          <Card>
+          <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-blue-600" />
@@ -334,12 +321,9 @@ ${content}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              
-              {/* Foundational Model Selection */}
+              {/* Model Selection */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">Model to be Pro(m)pted</h3>
-                
-                {/* Model Provider Selection */}
+                <h3 className="text-lg font-semibold text-gray-800">Model to be Pro(m)pted</h3>
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">Model Provider</Label>
                   <div className="grid grid-cols-2 gap-3">
@@ -358,11 +342,10 @@ ${content}
                         </div>
                         <div className="text-left">
                           <div className="font-semibold">OpenAI</div>
-                          <div className="text-xs text-muted-foreground">GPT Models</div>
+                          <div className="text-xs text-gray-500">GPT Models</div>
                         </div>
                       </div>
                     </button>
-
                   </div>
                 </div>
 
@@ -372,7 +355,7 @@ ${content}
                   <select
                     value={selectedModel}
                     onChange={(e) => setSelectedModel(e.target.value)}
-                    className="w-full p-3 border border-border rounded-md bg-background focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full p-3 border border-gray-300 rounded-md bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     {modelOptions[selectedCompany as keyof typeof modelOptions].map((model) => (
                       <option key={model.id} value={model.id}>
@@ -381,8 +364,8 @@ ${content}
                     ))}
                   </select>
                 </div>
-                
-                {/* Only show reasoning effort for GPT-5 models */}
+
+                {/* Reasoning Effort */}
                 {selectedModel !== "gpt-4.1" && (
                   <div className="space-y-2">
                     <Label className="text-sm font-medium">Reasoning Effort</Label>
@@ -400,7 +383,7 @@ ${content}
                           }}
                           className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
                         />
-                        <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                        <div className="flex justify-between text-xs text-gray-500 mt-1">
                           <span>Low</span>
                           <span>Medium</span>
                           <span>High</span>
@@ -425,7 +408,7 @@ ${content}
                     Upload a document to automatically analyze and fill industry & use case fields
                   </p>
                 </div>
-                
+
                 <div className="space-y-3">
                   <div className="flex items-center justify-center">
                     <label htmlFor="document-upload" className="cursor-pointer">
@@ -442,7 +425,7 @@ ${content}
                       />
                     </label>
                   </div>
-                  
+
                   {uploadedFile && (
                     <div className="text-center space-y-2">
                       <p className="text-sm text-green-600">
@@ -479,7 +462,7 @@ ${content}
                     id="industry"
                     value={industry}
                     onChange={(e) => setIndustry(e.target.value)}
-                    placeholder="e.g., technology, healthcare, education"
+                    placeholder="e.g., Finance, Healthcare, Technology"
                     className="w-full"
                   />
                 </div>
@@ -489,7 +472,7 @@ ${content}
                     id="usecase"
                     value={usecase}
                     onChange={(e) => setUsecase(e.target.value)}
-                    placeholder="e.g., content creation, data analysis, customer service"
+                    placeholder="e.g., Stock Research, Risk Analysis, Financial Reporting"
                     className="w-full"
                   />
                 </div>
@@ -497,8 +480,8 @@ ${content}
 
               {/* Enhanced Context Gathering */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">Context & Requirements</h3>
-                
+                <h3 className="text-lg font-semibold text-gray-800">Context & Requirements</h3>
+
                 {/* Main Description */}
                 <div className="space-y-2">
                   <Label htmlFor="description" className="text-sm font-medium">
@@ -508,85 +491,222 @@ ${content}
                     id="description"
                     value={promptDescription}
                     onChange={(e) => setPromptDescription(e.target.value)}
-                    placeholder="Describe what you want the prompt to do. For example: 'Create a prompt that helps generate engaging blog content with SEO optimization and clear call-to-actions for marketing campaigns'"
+                    placeholder="Describe what you want the prompt to do. For example: 'Create a prompt that helps analyze stock performance and generate investment recommendations based on financial metrics and market trends'"
                     className="min-h-[100px] resize-none"
                   />
                 </div>
 
-                {/* Workflow */}
+                {/* Region Selection */}
                 <div className="space-y-2">
-                  <Label htmlFor="workflow" className="text-sm font-medium">
-                    Workflow or Process (Optional)
-                  </Label>
-                  <Textarea
-                    id="workflow"
-                    value={workflow}
-                    onChange={(e) => setWorkflow(e.target.value)}
-                    placeholder="Describe your typical workflow or process. For example: 'Research topic → Create outline → Write draft → Review for SEO → Final edit'"
-                    className="min-h-[80px] resize-none"
-                  />
-                </div>
-
-                {/* Input/Output Format */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="input-format" className="text-sm font-medium">
-                      Input Format (Optional)
-                    </Label>
-                    <Input
-                      id="input-format"
-                      value={inputFormat}
-                      onChange={(e) => setInputFormat(e.target.value)}
-                      placeholder="e.g., Topic + target audience + length requirements"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="output-format" className="text-sm font-medium">
-                      Output Format (Optional)
-                    </Label>
-                    <Input
-                      id="output-format"
-                      value={outputFormat}
-                      onChange={(e) => setOutputFormat(e.target.value)}
-                      placeholder="e.g., Structured markdown, JSON, bullet points"
-                    />
+                  <Label className="text-sm font-medium">Region (Optional)</Label>
+                  <div className="space-y-3">
+                    <select
+                      value={region}
+                      onChange={(e) => setRegion(e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-md bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="global">Global</option>
+                      <option value="north-america">North America</option>
+                      <option value="europe">Europe</option>
+                      <option value="asia-pacific">Asia Pacific</option>
+                      <option value="custom">Custom</option>
+                    </select>
+                    {region === 'custom' && (
+                      <Input
+                        value={customRegion}
+                        onChange={(e) => setCustomRegion(e.target.value)}
+                        placeholder="Enter custom region (e.g., Middle East, Latin America)"
+                        className="mt-2"
+                      />
+                    )}
                   </div>
                 </div>
 
-                {/* Current Agents */}
+                {/* Tasks Management */}
                 <div className="space-y-2">
-                  <Label htmlFor="current-agents" className="text-sm font-medium">
-                    Current Agents or Tools (Optional)
-                  </Label>
-                  <Input
-                    id="current-agents"
-                    value={currentAgents}
-                    onChange={(e) => setCurrentAgents(e.target.value)}
-                    placeholder="e.g., ChatGPT, Claude, Jasper, custom tools, workflow software"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    List any AI agents, tools, or platforms you currently use in your workflow.
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium">Tasks (Optional)</Label>
+                    <Button
+                      type="button"
+                      onClick={addTask}
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add Task
+                    </Button>
+                  </div>
+                  <div className="space-y-2">
+                    {tasks.map((task, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <Input
+                          value={task}
+                          onChange={(e) => updateTask(index, e.target.value)}
+                          placeholder={`Task ${index + 1} (e.g., Analyze stock fundamentals, Calculate risk metrics, Generate investment summary)`}
+                          className="flex-1"
+                        />
+                        {tasks.length > 1 && (
+                          <Button
+                            type="button"
+                            onClick={() => removeTask(index)}
+                            variant="outline"
+                            size="sm"
+                            className="p-2"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    Add specific tasks or steps you want the prompt to help accomplish.
                   </p>
                 </div>
-              </div>
 
-              {/* API Key Notice */}
-              {!user && (
-                <Alert className="border-amber-200 bg-amber-50">
-                  <Key className="h-4 w-4 text-amber-600" />
-                  <AlertDescription className="text-amber-800">
-                    <strong>Pro Tip:</strong> For unlimited access and better performance, 
-                    <Button 
-                      variant="link" 
-                      className="h-auto p-0 ml-1 text-amber-700 underline"
-                      onClick={() => setShowAuthPrompt(true)}
+                {/* Links/Sources Management */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium">Links/Sources (Optional)</Label>
+                    <Button
+                      type="button"
+                      onClick={addLink}
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-2"
                     >
-                      sign up and add your OpenAI API key
+                      <Plus className="w-4 h-4" />
+                      Add Link
                     </Button>
-                    {' '}in Settings. This gives you direct access to GPT models without limits.
-                  </AlertDescription>
-                </Alert>
-              )}
+                  </div>
+                  <div className="space-y-2">
+                    {links.map((link, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <Input
+                          value={link}
+                          onChange={(e) => updateLink(index, e.target.value)}
+                          placeholder={`Link ${index + 1} (e.g., https://example.com)`}
+                          className="flex-1"
+                        />
+                        {links.length > 1 && (
+                          <Button
+                            type="button"
+                            onClick={() => removeLink(index)}
+                            variant="outline"
+                            size="sm"
+                            className="p-2"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    Add relevant links or sources necessary to complete the prompt.
+                  </p>
+                </div>
+
+                {/* JSON Input/Output Formats */}
+                <div className="space-y-4">
+                  <h4 className="text-md font-medium text-gray-800">Data Formats (Optional)</h4>
+
+                  {/* Input Format */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium">Expected Input Format (JSON)</Label>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          onClick={setInputFormatExample}
+                          variant="outline"
+                          size="sm"
+                          className="text-xs"
+                        >
+                          Example
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={() => setShowInputFormat(!showInputFormat)}
+                          variant="outline"
+                          size="sm"
+                          className="text-xs"
+                        >
+                          {showInputFormat ? 'Hide' : 'Add Format'}
+                        </Button>
+                      </div>
+                    </div>
+                    {showInputFormat && (
+                      <div className="space-y-2">
+                        <Textarea
+                          value={inputFormat}
+                          onChange={(e) => setInputFormat(e.target.value)}
+                          placeholder="Define expected input JSON structure..."
+                          className={`min-h-[120px] font-mono text-sm resize-vertical ${
+                            inputFormat && !isValidJSON(inputFormat) 
+                              ? 'border-red-300 focus:border-red-500' 
+                              : 'border-gray-300'
+                          }`}
+                        />
+                        {inputFormat && !isValidJSON(inputFormat) && (
+                          <p className="text-xs text-red-600">Invalid JSON format</p>
+                        )}
+                        {inputFormat && isValidJSON(inputFormat) && inputFormat.trim() && (
+                          <p className="text-xs text-green-600">✓ Valid JSON format</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Output Format */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm font-medium">Desired Output Format (JSON)</Label>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          onClick={setOutputFormatExample}
+                          variant="outline"
+                          size="sm"
+                          className="text-xs"
+                        >
+                          Example
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={() => setShowOutputFormat(!showOutputFormat)}
+                          variant="outline"
+                          size="sm"
+                          className="text-xs"
+                        >
+                          {showOutputFormat ? 'Hide' : 'Add Format'}
+                        </Button>
+                      </div>
+                    </div>
+                    {showOutputFormat && (
+                      <div className="space-y-2">
+                        <Textarea
+                          value={outputFormat}
+                          onChange={(e) => setOutputFormat(e.target.value)}
+                          placeholder="Define desired output JSON structure..."
+                          className={`min-h-[120px] font-mono text-sm resize-vertical ${
+                            outputFormat && !isValidJSON(outputFormat) 
+                              ? 'border-red-300 focus:border-red-500' 
+                              : 'border-gray-300'
+                          }`}
+                        />
+                        {outputFormat && !isValidJSON(outputFormat) && (
+                          <p className="text-xs text-red-600">Invalid JSON format</p>
+                        )}
+                        {outputFormat && isValidJSON(outputFormat) && outputFormat.trim() && (
+                          <p className="text-xs text-green-600">✓ Valid JSON format</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
 
               {/* Generate Button */}
               <Button 
@@ -624,7 +744,7 @@ ${content}
 
           {/* Results Section */}
           {generatedResult && (
-            <Card>
+            <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   {generatedResult.success ? (
@@ -684,19 +804,14 @@ ${content}
                               Download .md
                             </Button>
                             <Button 
-                              onClick={() => navigate('/', { state: { promptToRefine: generatedResult.final_prompt } })}
+                              onClick={() => navigate('/upload-refine', { state: { promptToRefine: generatedResult.final_prompt } })}
                               className="bg-orange-600 hover:bg-orange-700"
                               size="sm"
                             >
                               Refine This Prompt
                             </Button>
-
                           </div>
                         </div>
-
-
-
-
                       </>
                     ) : (
                       /* Fallback for unstructured response */
@@ -728,7 +843,7 @@ ${content}
                             Download .md
                           </Button>
                           <Button 
-                            onClick={() => navigate('/', { state: { promptToRefine: generatedResult.generated_prompt } })}
+                            onClick={() => navigate('/upload-refine', { state: { promptToRefine: generatedResult.generated_prompt } })}
                             className="bg-orange-600 hover:bg-orange-700"
                             size="sm"
                           >
@@ -737,20 +852,20 @@ ${content}
                         </div>
                       </div>
                     )}
-                    
+
                     {/* Metadata */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm pt-4 border-t">
                       <div className="flex flex-col">
-                        <span className="font-medium text-muted-foreground">Industry</span>
-                        <span className="text-foreground">{generatedResult.industry}</span>
+                        <span className="font-medium text-gray-500">Industry</span>
+                        <span className="text-gray-800">{generatedResult.industry}</span>
                       </div>
                       <div className="flex flex-col">
-                        <span className="font-medium text-muted-foreground">Use Case</span>
-                        <span className="text-foreground">{generatedResult.usecase}</span>
+                        <span className="font-medium text-gray-500">Use Case</span>
+                        <span className="text-gray-800">{generatedResult.usecase}</span>
                       </div>
                       <div className="flex flex-col">
-                        <span className="font-medium text-muted-foreground">Model Used</span>
-                        <span className="text-foreground">
+                        <span className="font-medium text-gray-500">Model Used</span>
+                        <span className="text-gray-800">
                           {modelOptions[selectedCompany as keyof typeof modelOptions].find(m => m.id === selectedModel)?.name || selectedModel}
                         </span>
                       </div>

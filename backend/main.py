@@ -88,14 +88,13 @@ def make_prompt_agent(industry, usecase):
 
 def make_prompt_editing_agent(industry, usecase):
     # Load prompt templates with templating
-    original_prompt   = load_prompt("prompts/original_prompt.md", industry=industry, usecase=usecase)
     extraction_prompt = load_prompt("prompts/extraction_prompt.md", industry=industry, usecase=usecase)
     critique_prompt   = load_prompt("prompts/critique_system.md", industry=industry, usecase=usecase)
     critique_user     = load_prompt("prompts/critique_user.md", industry=industry, usecase=usecase)
     revise_prompt     = load_prompt("prompts/revise_prompt.md", industry=industry, usecase=usecase)
     main_prompt       = load_prompt("prompts/main_prompt.md", industry=industry, usecase=usecase)
 
-    MODEL = "gpt-4.1"
+    MODEL = "gpt-5-mini-2025-08-07"
 
     search_agent = Agent(
         name="search_agent",
@@ -103,8 +102,7 @@ def make_prompt_editing_agent(industry, usecase):
         instructions=f"""
         You are a **Web-Search Assistant** for **{industry}** and **{usecase}**.  
         When invoked, call the `web.search_query` tool with a concise, focused query  
-        to retrieve up-to-date domain facts that are relevant to prompt engineering.  
-        Return only JSON: {{ "query": "...", "results": [{{title, snippet, url}}...] }}
+        to retrieve up-to-date domain facts that are necessary to create the optimal prompt for {usecase}
         """
     )
 
