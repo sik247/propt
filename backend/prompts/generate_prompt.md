@@ -100,7 +100,15 @@ Produce a **Task Outline** enumerating the concrete TASKS required for {usecase}
 ========================================
 Workflow
 ========================================
-1) **DRAFT** a production‑ready prompt tailored to {usecase} in {industry}. **CRITICAL**: Pay special attention to any additional context provided - ensure the prompt directly addresses the user's {usecase} and if provided {tasks}.
+1) **DRAFT** a production‑ready prompt tailored to {usecase} in {industry}. **CRITICAL**: Pay special attention to any additional context provided - ensure the prompt directly addresses the user's {usecase} and if provided {tasks}. 
+
+   **FORMATTING REQUIREMENTS FOR FINAL PROMPT**:
+   - Start with a clear main header (# System Prompt or # [Role Name])
+   - Use proper heading hierarchy (##, ###) for sections
+   - Add blank lines between major sections
+   - Use consistent bullet point formatting (-)
+   - Apply **bold** formatting for critical instructions
+   - Use proper markdown spacing for readability
 
    A) **Role and Objective** — Clearly state the role necessary for the LLM to perform the specified {tasks} and/or {usecase} for the {industry}.
 
@@ -135,10 +143,16 @@ Workflow
 ====================
 OUTPUT FORMAT
 ====================
-**planning**: List the sources utilized and key information used in a format with brief descriptions on how it was used to create the final prompt
-**final_prompt**: The fully refined system prompt.
-
-**final_prompt** format: Format it in markdown with appropriate headers, bullets point. Emphasize key information for the LLM prompt with <>, ** and prompt engineering emphasis guidelines   
+**planning**: List the sources utilized and key information used in a format with brief descriptions on how it was used to create the final prompt. The format must be bullet pointed hyperlinks of the sources and a short summary. 
+**final_prompt**: The fully refined system prompt. **CRITICAL FORMATTING REQUIREMENTS**:
+- Use proper markdown formatting with clear headers (# ## ###)
+- Add appropriate line breaks and spacing between sections
+- Use bullet points (-) for lists and sub-items
+- Use **bold** for emphasis on key instructions
+- Use `code blocks` for technical terms or specific commands
+- Ensure readability with proper paragraph spacing
+- Structure content hierarchically with clear section divisions
+- Add blank lines between major sections for visual separation   
 
 
 

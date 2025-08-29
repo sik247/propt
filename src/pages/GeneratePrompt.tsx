@@ -770,19 +770,9 @@ ${content}
                             🎯 Final System Prompt
                           </Label>
                           <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                            <div className="prose prose-sm max-w-none dark:prose-invert">
-                              <div className="markdown-body" dangerouslySetInnerHTML={{ 
-                                __html: generatedResult.final_prompt
-                                  .split('\n')
-                                  .map(line => {
-                                    if (line.startsWith('#')) return line; // Keep headers as is
-                                    if (line.startsWith('- ')) return line; // Keep list items as is
-                                    if (line.trim() === '') return '\n'; // Keep empty lines
-                                    return line + '  '; // Add two spaces for line breaks
-                                  })
-                                  .join('\n')
-                              }} />
-                            </div>
+                            <pre className="whitespace-pre-wrap text-sm font-mono leading-relaxed overflow-x-auto">
+                              {generatedResult.final_prompt}
+                            </pre>
                           </div>
                           <div className="flex gap-2 flex-wrap">
                             <Button 
@@ -813,6 +803,28 @@ ${content}
                             </Button>
                           </div>
                         </div>
+
+                        {/* Model's Logic Section */}
+                        {generatedResult.planning_content && (
+                          <div className="space-y-2">
+                            <Button
+                              onClick={() => setShowPlanning(!showPlanning)}
+                              variant="outline"
+                              size="sm"
+                              className="flex items-center gap-2"
+                            >
+                              🧠 Model's Logic
+                              {showPlanning ? ' (Hide)' : ' (Show)'}
+                            </Button>
+                            {showPlanning && (
+                              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                                <pre className="whitespace-pre-wrap text-sm leading-relaxed overflow-x-auto">
+                                  {generatedResult.planning_content}
+                                </pre>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </>
                     ) : (
                       /* Fallback for unstructured response */
