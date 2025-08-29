@@ -17,7 +17,7 @@ const Navigation = ({ user, onLogin, onLogout }: NavigationProps) => {
   const navItems = [
     { name: "Home", href: "/" },
     { name: "Browse Prompts", href: "/browse" },
-    { name: "Optimize Prompt", href: "/upload-optimize" },
+    { name: "Optimize Prompt", href: "/upload-refine" },
     // { name: "A/B Testing", href: "/testing" }, // Temporarily disabled
     { name: "Generate", href: "/generate" },
   ];

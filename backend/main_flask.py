@@ -249,17 +249,21 @@ def make_prompt_agent(industry, usecase, region="global", tasks=[], document="",
         else:
             tasks_formatted = "No specific tasks defined"
         
-        # Format input/output formats for template
+        # Format input/output formats for template (escape curly braces for string formatting)
         input_format_text = ""
         output_format_text = ""
         
         if input_format:
-            input_format_text = f"Expected Input Format:\n```json\n{input_format}\n```"
+            # Escape curly braces in JSON for string formatting
+            escaped_input = input_format.replace('{', '{{').replace('}', '}}')
+            input_format_text = f"Expected Input Format:\n```json\n{escaped_input}\n```"
         else:
             input_format_text = "No specific input format specified"
             
         if output_format:
-            output_format_text = f"Desired Output Format:\n```json\n{output_format}\n```"
+            # Escape curly braces in JSON for string formatting
+            escaped_output = output_format.replace('{', '{{').replace('}', '}}')
+            output_format_text = f"Desired Output Format:\n```json\n{escaped_output}\n```"
         else:
             output_format_text = "No specific output format specified"
         
@@ -610,7 +614,8 @@ def generate_prompt_api():
             final_prompt_only = str(generated_response).strip()
             
             # Extract planning_content from the final generated_response
-            planning_content = generated_response.get('planning', '')
+            # Since generated_response is a string, we need to parse it to extract planning
+            planning_content = extract_planning_from_response(str(generated_response))
 
             # Include planning_content in the API response
             return jsonify({
