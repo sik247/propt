@@ -10,7 +10,7 @@ This document explains how different prompt templates are used based on the sele
 - **Features**: 
   - Uses GPT-5 prompting best practices
   - Includes search-first strategy
-  - Draft → Lint → Refine workflow
+  - Draft → Lint → Optimize Prompt: Navigate to the prompt optimization page.
   - Structured output format with planning/final_prompt/considerations
 
 ### GPT-4.1 (OpenAI)  

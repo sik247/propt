@@ -95,9 +95,7 @@ const Home = () => {
               <Button size="lg" onClick={() => navigate('/browse')}>
                 Browse Prompts
               </Button>
-              <Button size="lg" variant="outline" onClick={() => navigate('/upload')}>
-                Upload & Refine
-              </Button>
+              <Button size="lg" variant="outline" onClick={() => navigate('/upload-optimize')}>Optimize Prompt</Button>
             </div>
           </div>
         </div>

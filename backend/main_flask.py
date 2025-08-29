@@ -608,13 +608,15 @@ def generate_prompt_api():
             
             # For now, just use the response as-is
             final_prompt_only = str(generated_response).strip()
-            planning_content = extract_planning_from_response(generated_response)
             
-            # Return the generated prompt with separated sections
+            # Extract planning_content from the final generated_response
+            planning_content = generated_response.get('planning', '')
+
+            # Include planning_content in the API response
             return jsonify({
                 "success": True,
-                "final_prompt": final_prompt_only,  # Only the System prompt content
-                "planning_content": planning_content,  # For planning button
+                "final_prompt": final_prompt_only,
+                "planning_content": planning_content,
                 # Remove considerations_content if not defined
                 # "considerations_content": considerations_content,
                 "generated_prompt": final_prompt_only,  # Fallback for compatibility

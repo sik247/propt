@@ -14,7 +14,7 @@ Examples of queries where you should propose file changes are as follows:
 - "Update the background color of my web page"
 - "Create a new file for handling form validation"
 - "Modify the existing class to include a getter method for the 'name' variable"
-- "Refine the UI to make it look more minimal"
+- "Optimize Prompt: Use this prompt to enhance your AI model's performance."
 
 Proposing shell command execution: Sometimes when implementing a user request, you may need to propose that a shell command be executed. This may occur with or without proposed file changes.
 

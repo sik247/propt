@@ -56,7 +56,7 @@ const GeneratePrompt = () => {
   const modelOptions = {
     openai: [
       { id: "gpt-5-mini-2025-08-07", name: "GPT-5", description: "Latest" },
-      { id: "gpt-4.1", name: "GPT-4.1", description: "" }
+      { id: "gpt-4.1", name: "4.1", description: "" }
     ]
   };
 
@@ -506,16 +506,17 @@ ${content}
                       className="w-full p-3 border border-gray-300 rounded-md bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="global">Global</option>
-                      <option value="north-america">North America</option>
-                      <option value="europe">Europe</option>
-                      <option value="asia-pacific">Asia Pacific</option>
+                      <option value="usa">United States</option>
+                      <option value="canada">Canada</option>
+                      <option value="uk">United Kingdom</option>
+                      <option value="australia">Australia</option>
                       <option value="custom">Custom</option>
                     </select>
                     {region === 'custom' && (
                       <Input
                         value={customRegion}
                         onChange={(e) => setCustomRegion(e.target.value)}
-                        placeholder="Enter custom region (e.g., Middle East, Latin America)"
+                        placeholder="Enter specific country or state (e.g., California, Ontario)"
                         className="mt-2"
                       />
                     )}
@@ -808,7 +809,7 @@ ${content}
                               className="bg-orange-600 hover:bg-orange-700"
                               size="sm"
                             >
-                              Refine This Prompt
+                              Optimize This Prompt
                             </Button>
                           </div>
                         </div>
@@ -847,7 +848,7 @@ ${content}
                             className="bg-orange-600 hover:bg-orange-700"
                             size="sm"
                           >
-                            Refine This Prompt
+                            Optimize This Prompt
                           </Button>
                         </div>
                       </div>

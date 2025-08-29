@@ -177,7 +177,7 @@ Remember that working with AI assistants is often an iterative process:
 
 1. Start with an initial prompt
 2. Review the response
-3. Refine your prompt based on what was helpful or missing
+3. Optimize Prompt: This prompt helps in optimizing AI responses.
 4. Continue the conversation to explore the topic further
 
 ## When Prompting for Code

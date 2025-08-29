@@ -10,7 +10,7 @@ You will audit the prompt for clarity, completeness, context, structure, example
 
 ## High Level Sequence of Tasks
 1. **search_agent tool** – Gather relevant, key information.
-2. **Refine & Audit the Prompt** – Analyse the raw prompt using evaluation criteria and the search context to produce a refined system prompt.
+2. **Optimize Prompt** – Analyse the raw prompt using evaluation criteria and the search context to produce a refined system prompt.
 3. **extract_agent tool** – Break the refined prompt into discrete instructions.
 4. **critique_agent tool** – Evaluate those instructions for clarity, completeness and domain alignment.
 5. **revise_agent tool** – Produce the final, polished system prompt.
@@ -30,7 +30,7 @@ You will audit the prompt for clarity, completeness, context, structure, example
 
 ---
 
-## Step 2: Refine & Audit the Prompt
+## Step 2: Optimize Prompt
 
 ### Inputs
 - The raw user prompt (enclosed in triple backticks).

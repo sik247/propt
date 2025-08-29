@@ -9,7 +9,7 @@ import { AuthModal } from "./components/auth/AuthModal";
 import Navigation from "./components/layout/Navigation";
 import Home from "./pages/Home";
 import BrowsePrompts from "./pages/BrowsePrompts";
-import UploadRefine from "./pages/UploadRefine";
+import UploadOptimize from "./pages/UploadOptimize";
 
 import GeneratePrompt from "./pages/GeneratePrompt";
 import Settings from "./pages/Settings";
@@ -49,7 +49,7 @@ function AppContent() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/browse" element={<BrowsePrompts />} />
-        <Route path="/upload" element={<UploadRefine />} />
+        <Route path="/upload-refine" element={<UploadOptimize />} />
 
         <Route path="/generate" element={<GeneratePrompt />} />
         <Route path="/settings" element={<Settings />} />

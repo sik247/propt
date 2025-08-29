@@ -42,7 +42,7 @@ Your main agent logic has been successfully integrated into the "Process with AI
 When you click "Process with AI Agent", the system executes:
 
 1. **Search Agent** - Gathers industry-specific information
-2. **Refine & Audit** - Analyzes and improves the prompt  
+2. **Optimize Prompt** - Analyzes and improves the prompt  
 3. **Extract Agent** - Breaks prompt into discrete instructions
 4. **Critique Agent** - Evaluates instructions for clarity
 5. **Revise Agent** - Produces the final polished prompt
