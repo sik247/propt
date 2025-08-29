@@ -247,6 +247,7 @@ ${content}
           context: promptDescription,
           region: region === 'custom' ? customRegion : region,
           tasks: tasks.filter(task => task.trim() !== ""), // Filter out empty tasks
+          links: links.filter(link => link.trim() !== ""), // Filter out empty links
           input_format: inputFormat && isValidJSON(inputFormat) ? inputFormat : "",
           output_format: outputFormat && isValidJSON(outputFormat) ? outputFormat : "",
           document_content: documentContent, // Include uploaded document content

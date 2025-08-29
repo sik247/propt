@@ -221,7 +221,7 @@ def summarize_document(document_content, reasoning_effort="medium"):
         print(f"⚠️ Error summarizing document: {e}")
         return f"Document provided (summary unavailable): {document_content[:200]}..."
 
-def make_prompt_agent(industry, usecase, region="global", tasks=[], document="", input_format="", output_format="", model_provider="openai", model="gpt-5-mini-2025-08-07", reasoning_effort="medium"):
+def make_prompt_agent(industry, usecase, region="global", tasks=[], links=[], document="", input_format="", output_format="", model_provider="openai", model="gpt-5-mini-2025-08-07", reasoning_effort="medium"):
     
     # Choose the appropriate prompt template based on the model
     if model_provider == "openai" and model == "gpt-5-mini-2025-08-07":
@@ -249,6 +249,13 @@ def make_prompt_agent(industry, usecase, region="global", tasks=[], document="",
         else:
             tasks_formatted = "No specific tasks defined"
         
+        # Format links/sources as a structured list
+        links_formatted = ""
+        if links:
+            links_formatted = "Reference links and sources:\n" + "\n".join([f"- {link}" for link in links])
+        else:
+            links_formatted = "No reference links provided"
+        
         # Format input/output formats for template
         input_format_text = ""
         output_format_text = ""
@@ -272,6 +279,7 @@ def make_prompt_agent(industry, usecase, region="global", tasks=[], document="",
             '{usecase}': usecase,
             '{region}': region,
             '{tasks}': tasks_formatted,
+            '{links}': links_formatted,
             '{document}': document if document else "No document provided",
             '{input_format}': input_format_text,
             '{output_format}': output_format_text
@@ -315,7 +323,7 @@ def make_prompt_agent(industry, usecase, region="global", tasks=[], document="",
         raise Exception(f"Failed to generate prompt: {str(e)}")
 
 def extract_final_prompt_from_response(response_text):
-    """Extract only the final_prompt section from the structured response"""
+    """Extract only the clean system prompt section from the structured response"""
     try:
         import re
         
@@ -325,80 +333,88 @@ def extract_final_prompt_from_response(response_text):
         print(f"🔍 Parsing response (first 500 chars): {response_str[:500]}")
         print(f"🔍 Response starts with: {repr(response_str[:50])}")
         
-        # Multiple patterns to try (including new patterns for structured responses)
+        # Look for the final_prompt section and extract only the clean system prompt
         patterns = [
-            # Pattern 0: Handle exact case of '\n  name' at start - extract everything after the structured header
-            r'^[\s\n]*name:\s*[^\n]*\n(.*?)$',
-            # Pattern 1: final_prompt with triple quotes
-            r'final_prompt:\s*"""(.*?)"""',
-            # Pattern 2: System prompt section
-            r'System:(.*?)(?:End of System prompt|Developer:|User:|$)',
-            # Pattern 3: Prompt section
-            r'Prompt:\s*(.*?)(?:\n\n|\n---|\nDeveloper:|\nUser:|$)',
-            # Pattern 4: Looking for actual prompt content after keywords
-            r'(?:Here is|Here\'s|The prompt is).*?:\s*(.*?)(?:\n\n|\n---|\nAdditional|$)',
-            # Pattern 5: YAML-style structured response with name field
-            r'name:\s*[^\n]+\s*.*?(?:prompt|content|system|final_prompt):\s*(.*?)(?:\n\w+:|$)',
-            # Pattern 6: Content after any colon (more general)
-            r'(?:content|prompt|system|final):\s*(.*?)(?:\n\w+:|$)',
-            # Pattern 7: Everything after first meaningful line break if structured
-            r'\n\s*\w+:.*?\n(.*?)(?:\n\w+:|$)',
-            # Pattern 8: Handle JSON-like structure
-            r'"(?:final_prompt|content|prompt|system)":\s*"(.*?)"',
+            # Pattern for **final_prompt**: content
+            r'\*\*final_prompt\*\*:\s*(.*?)(?=\n\n|$|(?:\*\*[a-zA-Z_]+\*\*:))',
+            # Pattern for final_prompt: content  
+            r'final_prompt:\s*(.*?)(?=\n\n|$|(?:\*\*[a-zA-Z_]+\*\*:))',
+            # Pattern for # System Prompt directly
+            r'(# System Prompt.*?)(?=\n\n(?:\*\*|planning|Context|Assumptions)|$)',
         ]
         
-        for i, pattern in enumerate(patterns):
+        for pattern in patterns:
             match = re.search(pattern, response_str, re.DOTALL | re.IGNORECASE)
             if match:
                 extracted = match.group(1).strip()
-                if len(extracted) > 50:  # Only return if it looks substantial
-                    print(f"✅ Successfully extracted using pattern {i+1}")
-                    return extracted
+                print(f"✅ Extracted final_prompt using pattern: {pattern[:50]}...")
+                print(f"📝 Extracted content (first 200 chars): {extracted[:200]}")
+                
+                # Clean up the extracted content
+                # Remove any leading/trailing whitespace and ensure it starts with # System Prompt
+                if not extracted.startswith('# System Prompt'):
+                    # If it doesn't start with the header, add it
+                    if extracted.startswith('System Prompt'):
+                        extracted = '# ' + extracted
+                    elif 'System Prompt' in extracted:
+                        # Find the System Prompt section
+                        system_prompt_match = re.search(r'(# System Prompt.*)', extracted, re.DOTALL)
+                        if system_prompt_match:
+                            extracted = system_prompt_match.group(1)
+                
+                return extracted
         
-        # If no patterns match but we have content, return a cleaned version
-        if len(response_str.strip()) > 0:
-            print(f"⚠️ No patterns matched, trying fallback extraction")
-            
-            # Remove common structured headers/metadata and find actual content
-            lines = response_str.split('\n')
-            content_lines = []
-            skip_metadata = True
-            
-            for line in lines:
-                line = line.strip()
-                # Skip empty lines and obvious metadata
-                if not line or line.startswith(('name:', 'id:', 'version:', 'type:')):
-                    continue
-                # If we find something that looks like content, start collecting
-                if len(line) > 30 or line.startswith(('You are', 'Your role', 'System:', 'As a')):
-                    skip_metadata = False
-                if not skip_metadata and len(line) > 10:
-                    content_lines.append(line)
-            
-            if content_lines:
-                result = '\n'.join(content_lines[:15])  # Take first 15 substantial lines
-                print(f"✅ Fallback extraction found {len(content_lines)} content lines")
-                return result
-            else:
-                # Last resort: return the whole response cleaned up
-                print(f"⚠️ Using raw response as last resort")
-                return response_str.strip()
-        
-        return response_str
+        # If no pattern matches, return the whole response but try to clean it
+        print("⚠️ No specific pattern matched, returning cleaned full response")
+        return clean_response_for_prompt(response_str)
         
     except Exception as e:
-        print(f"⚠️ Error extracting final_prompt: {e}")
+        print(f"❌ Error extracting final prompt: {e}")
         return str(response_text)
+
+def clean_response_for_prompt(response_text):
+    """Clean the response to make it suitable as a system prompt"""
+    try:
+        # Remove common non-prompt content
+        lines = response_text.split('\n')
+        cleaned_lines = []
+        skip_sections = ['planning', 'context', 'assumptions', 'planned vs', 'sources used']
+        
+        for line in lines:
+            line_lower = line.lower().strip()
+            if any(skip in line_lower for skip in skip_sections):
+                continue
+            if line.startswith('**') and line.endswith('**') and any(skip in line_lower for skip in skip_sections):
+                continue
+            cleaned_lines.append(line)
+        
+        return '\n'.join(cleaned_lines).strip()
+        
+    except Exception as e:
+        print(f"❌ Error cleaning response: {e}")
+        return response_text
 
 def extract_planning_from_response(response_text):
     """Extract planning section from the structured response"""
     try:
         import re
         
-        # Look for planning: """ content """
-        planning_match = re.search(r'planning:\s*"""(.*?)"""', response_text, re.DOTALL)
-        if planning_match:
-            return planning_match.group(1).strip()
+        # Look for different planning patterns
+        patterns = [
+            # Pattern for **planning**: content
+            r'\*\*planning\*\*:\s*(.*?)(?=\n\n|$|(?:\*\*[a-zA-Z_]+\*\*:))',
+            # Pattern for planning: content
+            r'planning:\s*(.*?)(?=\n\n|$|(?:\*\*[a-zA-Z_]+\*\*:))',
+            # Pattern for sources used section
+            r'planning — Sources used.*?\n(.*?)(?=\n\n|$|(?:final_prompt|Context))',
+        ]
+        
+        for pattern in patterns:
+            planning_match = re.search(pattern, response_text, re.DOTALL | re.IGNORECASE)
+            if planning_match:
+                planning_content = planning_match.group(1).strip()
+                if len(planning_content) > 20:  # Only return if substantial
+                    return planning_content
         
         return "No planning information available."
         
@@ -587,6 +603,7 @@ def generate_prompt_api():
         user_context = data.get('context', '')
         document_content = data.get('document_content', '')  # New: document content
         tasks = data.get('tasks', [])  # Array of tasks
+        links = data.get('links', [])  # Array of links/sources
         input_format = data.get('input_format', '')  # JSON input format
         output_format = data.get('output_format', '')  # JSON output format
         model_provider = data.get('model_provider', 'openai')
@@ -602,7 +619,7 @@ def generate_prompt_api():
                 document_summary = summarize_document(document_content, reasoning_effort)
             
             # Generate prompt using the selected model and provider
-            generated_response = make_prompt_agent(industry, usecase, region, tasks, document_summary, input_format, output_format, model_provider, model, reasoning_effort)
+            generated_response = make_prompt_agent(industry, usecase, region, tasks, links, document_summary, input_format, output_format, model_provider, model, reasoning_effort)
             
             # Debug: log the response to understand its structure
             print(f"📋 FULL AI RESPONSE:")
@@ -612,11 +629,10 @@ def generate_prompt_api():
             print(f"📋 Response type: {type(generated_response)}")
             print(f"📋 Response length: {len(str(generated_response))}")
             
-            # For now, just use the response as-is
-            final_prompt_only = str(generated_response).strip()
+            # Extract the clean final prompt from the response
+            final_prompt_only = extract_final_prompt_from_response(str(generated_response))
             
             # Extract planning_content from the final generated_response
-            # Since generated_response is a string, we need to parse it to extract planning
             planning_content = extract_planning_from_response(str(generated_response))
 
             # Include planning_content in the API response

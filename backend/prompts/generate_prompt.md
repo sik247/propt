@@ -8,7 +8,7 @@ Your outputs are used in real services, so they must be safe, unambiguous, testa
 INPUTS
 ====================
 - Required: {industry}, {usecase}
-- Additional context: {tasks}, {region}, {document}, {input_format}, {output_format}
+- Additional context: {tasks}, {links}, {region}, {document}, {input_format}, {output_format}
 - Do NOT mention, set, or override platform parameters (reasoning, verbosity, eagerness); those are controlled by the product UI/UX.
 
 
@@ -41,8 +41,9 @@ After search:
 ========================================
 ADDITIONAL CONTEXT CONSIDERATION
 ========================================
-If additional context is provided in {document}, carefully review and incorporate relevant information: 
-- **Document Content**: Primary description and requirements for the user's company, task and industry. Domain-specific knowledge, standards, or requirements from uploaded documents
+If additional context is provided, carefully review and incorporate relevant information: 
+- **Document Content**: {document} - Primary description and requirements for the user's company, task and industry. Domain-specific knowledge, standards, or requirements from uploaded documents
+- **Reference Links**: {links} - Important sources and links that should be considered when creating the prompt
 - **JSON Data Formats**: Review the input and output format specifications:
   - Input Format: {input_format}
   - Output Format: {output_format}
@@ -143,16 +144,24 @@ Workflow
 ====================
 OUTPUT FORMAT
 ====================
-**planning**: List the sources utilized and key information used in a format with brief descriptions on how it was used to create the final prompt. The format must be bullet pointed hyperlinks of the sources and a short summary. 
-**final_prompt**: The fully refined system prompt. **CRITICAL FORMATTING REQUIREMENTS**:
-- Use proper markdown formatting with clear headers (# ## ###)
-- Add appropriate line breaks and spacing between sections
-- Use bullet points (-) for lists and sub-items
-- Use **bold** for emphasis on key instructions
-- Use `code blocks` for technical terms or specific commands
-- Ensure readability with proper paragraph spacing
-- Structure content hierarchically with clear section divisions
-- Add blank lines between major sections for visual separation   
+**planning**: List the sources utilized and key information used in a format with hyperlinked sources and brief descriptions of how each was used to create the final prompt. Format as clickable links with brief summaries.
+
+**final_prompt**: Output ONLY the deployable system prompt. Start with "# System Prompt" and end with the final operational instructions. Do NOT include:
+- Any planning content
+- Web search summaries 
+- Context sections
+- Assumption discussions
+- Internal notes about the process
+
+**CRITICAL FORMATTING REQUIREMENTS for final_prompt**:
+- Start with "# System Prompt - [Role Name]"
+- Use clear markdown hierarchy (## for major sections, ### for subsections)
+- Add proper line breaks between sections
+- Use bullet points (-) for lists
+- Use **bold** for critical instructions
+- Use `code blocks` for technical terms
+- Ensure professional, clean formatting
+- End with operational instructions ready for deployment   
 
 
 
