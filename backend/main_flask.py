@@ -249,34 +249,36 @@ def make_prompt_agent(industry, usecase, region="global", tasks=[], document="",
         else:
             tasks_formatted = "No specific tasks defined"
         
-        # Format input/output formats for template (escape curly braces for string formatting)
+        # Format input/output formats for template
         input_format_text = ""
         output_format_text = ""
         
         if input_format:
-            # Escape curly braces in JSON for string formatting
-            escaped_input = input_format.replace('{', '{{').replace('}', '}}')
-            input_format_text = f"Expected Input Format:\n```json\n{escaped_input}\n```"
+            input_format_text = f"Expected Input Format:\n```json\n{input_format}\n```"
         else:
             input_format_text = "No specific input format specified"
             
         if output_format:
-            # Escape curly braces in JSON for string formatting
-            escaped_output = output_format.replace('{', '{{').replace('}', '}}')
-            output_format_text = f"Desired Output Format:\n```json\n{escaped_output}\n```"
+            output_format_text = f"Desired Output Format:\n```json\n{output_format}\n```"
         else:
             output_format_text = "No specific output format specified"
         
-        # Fill the template with new parameter structure
-        filled_prompt = generate_prompt_template.format(
-            industry=industry, 
-            usecase=usecase, 
-            region=region,
-            tasks=tasks_formatted,
-            document=document if document else "No document provided",
-            input_format=input_format_text,
-            output_format=output_format_text
-        )
+        # Fill the template with new parameter structure using safe string replacement
+        filled_prompt = generate_prompt_template
+        
+        # Replace placeholders one by one to avoid formatting conflicts
+        replacements = {
+            '{industry}': industry,
+            '{usecase}': usecase,
+            '{region}': region,
+            '{tasks}': tasks_formatted,
+            '{document}': document if document else "No document provided",
+            '{input_format}': input_format_text,
+            '{output_format}': output_format_text
+        }
+        
+        for placeholder, value in replacements.items():
+            filled_prompt = filled_prompt.replace(placeholder, str(value))
         
         # Choose the model to use based on provider and model selection
         api_model = model if model_provider == "openai" else model
