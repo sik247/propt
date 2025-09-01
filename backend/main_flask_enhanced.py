@@ -681,13 +681,6 @@ def generate_prompt_api():
         reasoning_effort = data.get('reasoning_effort', 'medium')
         
         print(f"🎨 Generating prompt for {industry} - {usecase} using {model_provider}/{model} with {reasoning_effort} reasoning")
-        print(f"⏱️ Expected processing time: 60-90 seconds (GPT-5 with web search)")
-        
-        # Add timing information to response headers for client-side timeout handling
-        response_headers = {
-            'X-Expected-Duration': '90',  # seconds
-            'X-Processing-Started': str(int(time.time()))
-        }
         
         try:
             # Summarize document if provided
@@ -1157,18 +1150,6 @@ def view_logs():
             "error": f"Error retrieving logs: {str(e)}"
         }), 500
 
-@app.route('/api/status', methods=['GET'])
-def status_check():
-    """
-    Status endpoint for long-running operations
-    """
-    return jsonify({
-        "status": "processing",
-        "message": "API is processing your request. GPT-5 with web search typically takes 60-90 seconds.",
-        "estimated_time": "60-90 seconds",
-        "timestamp": time.time()
-    })
-
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """
@@ -1183,8 +1164,7 @@ def health_check():
             "5-Step Agent Pipeline",
             "Auto-Generated JSON Formats",
             "Enhanced HTML Logging"
-        ],
-        "performance_note": "GPT-5 with web search typically takes 60-90 seconds per request"
+        ]
     })
 
 if __name__ == '__main__':

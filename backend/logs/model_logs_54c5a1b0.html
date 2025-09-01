@@ -1,0 +1,217 @@
+
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Model Logs - Session 54c5a1b0</title>
+            <style>
+                body {
+                    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+                    margin: 0;
+                    padding: 20px;
+                    background: #1a1a1a;
+                    color: #e0e0e0;
+                    line-height: 1.4;
+                }
+                .header {
+                    border-bottom: 2px solid #333;
+                    padding-bottom: 20px;
+                    margin-bottom: 20px;
+                }
+                .log-container {
+                    max-width: 100%;
+                    overflow-x: auto;
+                }
+                .log-entry {
+                    padding: 8px 12px;
+                    margin: 2px 0;
+                    border-left: 3px solid #333;
+                    background: rgba(255, 255, 255, 0.02);
+                    border-radius: 4px;
+                    transition: all 0.2s ease;
+                }
+                .log-entry:hover {
+                    background: rgba(255, 255, 255, 0.05);
+                    transform: translateX(5px);
+                }
+                .log-timestamp {
+                    color: #888;
+                    margin-right: 10px;
+                    font-size: 0.9em;
+                }
+                .log-level {
+                    margin-right: 10px;
+                    font-weight: bold;
+                    min-width: 80px;
+                    display: inline-block;
+                }
+                .log-module {
+                    color: #60a5fa;
+                    margin-right: 10px;
+                    font-size: 0.9em;
+                }
+                .log-message {
+                    flex: 1;
+                }
+                .log-debug { border-left-color: #6b7280; }
+                .log-info { border-left-color: #3b82f6; }
+                .log-warning { border-left-color: #f59e0b; }
+                .log-error { border-left-color: #ef4444; }
+                .log-critical { border-left-color: #dc2626; }
+                
+                /* Hyperlink styles */
+                .api-link {
+                    color: #34d399;
+                    text-decoration: none;
+                    border-bottom: 1px dotted #34d399;
+                    cursor: pointer;
+                }
+                .api-link:hover {
+                    background: rgba(52, 211, 153, 0.1);
+                    padding: 2px 4px;
+                    border-radius: 3px;
+                }
+                .file-link {
+                    color: #fbbf24;
+                    text-decoration: none;
+                    border-bottom: 1px dotted #fbbf24;
+                    cursor: pointer;
+                }
+                .file-link:hover {
+                    background: rgba(251, 191, 36, 0.1);
+                    padding: 2px 4px;
+                    border-radius: 3px;
+                }
+                .model-link {
+                    color: #a78bfa;
+                    text-decoration: none;
+                    border-bottom: 1px dotted #a78bfa;
+                    cursor: pointer;
+                }
+                .model-link:hover {
+                    background: rgba(167, 139, 250, 0.1);
+                    padding: 2px 4px;
+                    border-radius: 3px;
+                }
+                .external-link {
+                    color: #60a5fa;
+                    text-decoration: none;
+                }
+                .external-link:hover {
+                    text-decoration: underline;
+                }
+                
+                /* Filter controls */
+                .filter-controls {
+                    margin-bottom: 20px;
+                    padding: 15px;
+                    background: rgba(255, 255, 255, 0.05);
+                    border-radius: 8px;
+                }
+                .filter-controls select, .filter-controls input {
+                    background: #333;
+                    color: #e0e0e0;
+                    border: 1px solid #555;
+                    padding: 5px 10px;
+                    margin: 5px;
+                    border-radius: 4px;
+                }
+                
+                /* Auto-refresh indicator */
+                .refresh-indicator {
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    padding: 10px 15px;
+                    background: #10b981;
+                    color: white;
+                    border-radius: 20px;
+                    font-size: 0.9em;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>🤖 Model Logs - Session 54c5a1b0</h1>
+                <p>Started: 2025-09-01 13:02:34</p>
+                <div class="refresh-indicator">🔄 Auto-refreshing</div>
+            </div>
+            
+            <div class="filter-controls">
+                <select id="levelFilter" onchange="filterLogs()">
+                    <option value="">All Levels</option>
+                    <option value="DEBUG">Debug</option>
+                    <option value="INFO">Info</option>
+                    <option value="WARNING">Warning</option>
+                    <option value="ERROR">Error</option>
+                </select>
+                <input type="text" id="searchFilter" placeholder="Search logs..." onkeyup="filterLogs()">
+                <button onclick="clearLogs()">Clear View</button>
+                <button onclick="scrollToBottom()">Jump to Bottom</button>
+            </div>
+            
+            <div class="log-container" id="logContainer">
+        
+            <script>
+                function filterLogs() {
+                    const levelFilter = document.getElementById('levelFilter').value;
+                    const searchFilter = document.getElementById('searchFilter').value.toLowerCase();
+                    const logEntries = document.querySelectorAll('.log-entry');
+                    
+                    logEntries.forEach(entry => {
+                        const matchesLevel = !levelFilter || entry.classList.contains('log-' + levelFilter.toLowerCase());
+                        const matchesSearch = !searchFilter || entry.textContent.toLowerCase().includes(searchFilter);
+                        
+                        entry.style.display = matchesLevel && matchesSearch ? 'block' : 'none';
+                    });
+                }
+                
+                function clearLogs() {
+                    document.getElementById('logContainer').innerHTML = '';
+                }
+                
+                function scrollToBottom() {
+                    window.scrollTo(0, document.body.scrollHeight);
+                }
+                
+                // Auto-refresh functionality
+                function refreshLogs() {
+                    // In a real implementation, this would fetch new logs via AJAX
+                    // For now, just indicate refresh capability
+                    console.log('Auto-refresh not implemented for static HTML');
+                }
+                
+                // Add click handlers for hyperlinks
+                document.addEventListener('click', function(e) {
+                    if (e.target.classList.contains('api-link')) {
+                        e.preventDefault();
+                        const endpoint = e.target.dataset.endpoint;
+                        console.log('API Endpoint clicked:', endpoint);
+                        // You could implement navigation or API testing here
+                    }
+                    
+                    if (e.target.classList.contains('file-link')) {
+                        e.preventDefault();
+                        const file = e.target.dataset.file;
+                        console.log('File link clicked:', file);
+                        // You could implement file viewing here
+                    }
+                    
+                    if (e.target.classList.contains('model-link')) {
+                        e.preventDefault();
+                        const model = e.target.dataset.model;
+                        console.log('Model link clicked:', model);
+                        // You could show model information here
+                    }
+                });
+                
+                // Initialize on page load
+                window.addEventListener('load', function() {
+                    scrollToBottom();
+                });
+            </script>
+            </div>
+            </body>
+            </html>
+        
