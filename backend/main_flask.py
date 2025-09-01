@@ -8,11 +8,27 @@ from openai import OpenAI
 from agents import Agent, Runner, get_client
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
-from enhanced_logging import (
-    get_enhanced_logger, log_model_request, log_model_response, 
-    log_model_error, log_agent_pipeline_start, log_agent_pipeline_end
-)
-from format_generator import generate_json_formats, format_json_for_prompt
+# Optional enhanced features - fallback to basic functionality if not available
+try:
+    from enhanced_logging import (
+        get_enhanced_logger, log_model_request, log_model_response, 
+        log_model_error, log_agent_pipeline_start, log_agent_pipeline_end
+    )
+    from format_generator import generate_json_formats, format_json_for_prompt
+    ENHANCED_FEATURES_AVAILABLE = True
+    print("✅ Enhanced features loaded successfully")
+except ImportError as e:
+    print(f"⚠️ Enhanced features not available: {e}")
+    ENHANCED_FEATURES_AVAILABLE = False
+    
+    # Fallback functions
+    def log_model_request(*args, **kwargs): pass
+    def log_model_response(*args, **kwargs): pass
+    def log_model_error(*args, **kwargs): pass
+    def log_agent_pipeline_start(*args, **kwargs): pass
+    def log_agent_pipeline_end(*args, **kwargs): pass
+    def generate_json_formats(*args, **kwargs): return {}, {}
+    def format_json_for_prompt(data): return ""
 
 # Load environment variables from root .env file
 root_env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
@@ -33,8 +49,16 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-# Initialize enhanced logger
-enhanced_logger = get_enhanced_logger("propt_api")
+# Initialize enhanced logger if available
+if ENHANCED_FEATURES_AVAILABLE:
+    try:
+        enhanced_logger = get_enhanced_logger("propt_api")
+        print("✅ Enhanced logging initialized")
+    except Exception as e:
+        print(f"⚠️ Enhanced logging failed to initialize: {e}")
+        ENHANCED_FEATURES_AVAILABLE = False
+else:
+    enhanced_logger = None
 
 # Configure CORS
 CORS(app, resources={
@@ -229,7 +253,7 @@ def summarize_document(document_content, reasoning_effort="medium"):
         print(f"⚠️ Error summarizing document: {e}")
         return f"Document provided (summary unavailable): {document_content[:200]}..."
 
-def make_prompt_agent(industry, usecase, region="global", tasks=[], links=[], document="", input_format="", output_format="", model_provider="openai", model="gpt-5-mini-2025-08-07", reasoning_effort="medium"):
+def make_prompt_agent(industry, usecase, region="global", tasks=[], links=[], document="", input_format="", output_format="", model_provider="openai", model="gpt-5-mini-2025-08-07", reasoning_effort="medium", auto_generate_formats=False):
     
     # Choose the appropriate prompt template based on the model
     if model_provider == "openai" and model == "gpt-5-mini-2025-08-07":
@@ -268,8 +292,8 @@ def make_prompt_agent(industry, usecase, region="global", tasks=[], links=[], do
         input_format_text = ""
         output_format_text = ""
         
-        # Auto-generate JSON formats if not provided
-        if not input_format or not output_format:
+        # Auto-generate JSON formats if not provided (only if enhanced features are enabled and user requests it)
+        if ENHANCED_FEATURES_AVAILABLE and auto_generate_formats and (not input_format or not output_format):
             try:
                 print(f"🎯 Auto-generating JSON formats for {industry} - {usecase}")
                 auto_input_format, auto_output_format = generate_json_formats(industry, usecase, tasks, reasoning_effort)
@@ -679,6 +703,7 @@ def generate_prompt_api():
         model_provider = data.get('model_provider', 'openai')
         model = data.get('model', 'gpt-5-mini-2025-08-07')
         reasoning_effort = data.get('reasoning_effort', 'medium')
+        auto_generate_formats = data.get('auto_generate_formats', False)  # Optional enhanced feature
         
         print(f"🎨 Generating prompt for {industry} - {usecase} using {model_provider}/{model} with {reasoning_effort} reasoning")
         print(f"⏱️ Expected processing time: 60-90 seconds (GPT-5 with web search)")
@@ -696,7 +721,7 @@ def generate_prompt_api():
                 document_summary = summarize_document(document_content, reasoning_effort)
             
             # Generate prompt using the selected model and provider
-            generated_response = make_prompt_agent(industry, usecase, region, tasks, links, document_summary, input_format, output_format, model_provider, model, reasoning_effort)
+            generated_response = make_prompt_agent(industry, usecase, region, tasks, links, document_summary, input_format, output_format, model_provider, model, reasoning_effort, auto_generate_formats)
             
             # Debug: log the response to understand its structure
             print(f"📋 FULL AI RESPONSE:")

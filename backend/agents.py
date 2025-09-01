@@ -6,7 +6,17 @@ from typing import Any, Dict, List, Optional, Type
 from pydantic import BaseModel
 from openai import OpenAI
 import os
-from enhanced_logging import log_model_request, log_model_response, log_model_error
+# Optional enhanced logging - fallback if not available
+try:
+    from enhanced_logging import log_model_request, log_model_response, log_model_error
+    ENHANCED_LOGGING_AVAILABLE = True
+except ImportError:
+    ENHANCED_LOGGING_AVAILABLE = False
+    
+    # Fallback functions
+    def log_model_request(*args, **kwargs): pass
+    def log_model_response(*args, **kwargs): pass
+    def log_model_error(*args, **kwargs): pass
 import time
 
 # Initialize client lazily to avoid import-time errors
