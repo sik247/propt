@@ -6,8 +6,13 @@ from pydantic import BaseModel, Field
 from typing import List, Dict, Any
 from openai import OpenAI
 from agents import Agent, Runner, get_client
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
+from enhanced_logging import (
+    get_enhanced_logger, log_model_request, log_model_response, 
+    log_model_error, log_agent_pipeline_start, log_agent_pipeline_end
+)
+from format_generator import generate_json_formats, format_json_for_prompt
 
 # Load environment variables from root .env file
 root_env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
@@ -27,6 +32,9 @@ app = Flask(__name__)
 import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
+# Initialize enhanced logger
+enhanced_logger = get_enhanced_logger("propt_api")
 
 # Configure CORS
 CORS(app, resources={
@@ -260,6 +268,25 @@ def make_prompt_agent(industry, usecase, region="global", tasks=[], links=[], do
         input_format_text = ""
         output_format_text = ""
         
+        # Auto-generate JSON formats if not provided
+        if not input_format or not output_format:
+            try:
+                print(f"🎯 Auto-generating JSON formats for {industry} - {usecase}")
+                auto_input_format, auto_output_format = generate_json_formats(industry, usecase, tasks, reasoning_effort)
+                
+                # Use auto-generated if not provided by user
+                if not input_format:
+                    input_format = format_json_for_prompt(auto_input_format)
+                    print(f"✅ Auto-generated input format for {industry}")
+                
+                if not output_format:
+                    output_format = format_json_for_prompt(auto_output_format)
+                    print(f"✅ Auto-generated output format for {industry}")
+                    
+            except Exception as format_error:
+                print(f"⚠️ Error auto-generating formats: {format_error}")
+                # Continue with user-provided formats or empty strings
+        
         if input_format:
             input_format_text = f"Expected Input Format:\n```json\n{input_format}\n```"
         else:
@@ -295,21 +322,53 @@ def make_prompt_agent(industry, usecase, region="global", tasks=[], links=[], do
         if not client:
             raise ValueError("OpenAI client is not initialized")
             
-        # Make the API call
-        response = client.responses.create(
+        # Log the model request
+        log_model_request(
             model=api_model,
-            input=filled_prompt,
-            tools=[{"type": "web_search_preview"}],
-            reasoning={"effort": reasoning_effort}
+            prompt=filled_prompt,
+            reasoning_effort=reasoning_effort,
+            industry=industry,
+            usecase=usecase,
+            model_provider=model_provider
         )
         
-        # Debug: log what the AI actually returned
-        print(f"🤖 AI RESPONSE DEBUG:")
-        print(f"Response object type: {type(response)}")
-        print(f"Output text type: {type(response.output_text)}")
-        print(f"Output text length: {len(response.output_text)}")
-        print(f"Output text content: {repr(response.output_text[:500])}")
-        print("="*60)
+        # Make the API call
+        start_time = time.time()
+        try:
+            response = client.responses.create(
+                model=api_model,
+                input=filled_prompt,
+                tools=[{"type": "web_search_preview"}],
+                reasoning={"effort": reasoning_effort}
+            )
+            processing_time = time.time() - start_time
+            
+            # Log the successful response
+            log_model_response(
+                model=api_model,
+                response=response.output_text,
+                processing_time=processing_time,
+                industry=industry,
+                usecase=usecase
+            )
+            
+            # Debug: log what the AI actually returned
+            print(f"🤖 AI RESPONSE DEBUG:")
+            print(f"Response object type: {type(response)}")
+            print(f"Output text type: {type(response.output_text)}")
+            print(f"Output text length: {len(response.output_text)}")
+            print(f"Output text content: {repr(response.output_text[:500])}")
+            print("="*60)
+        except Exception as api_error:
+            processing_time = time.time() - start_time
+            log_model_error(
+                model=api_model,
+                error=str(api_error),
+                processing_time=processing_time,
+                industry=industry,
+                usecase=usecase
+            )
+            raise api_error
         
         # Validate response
         if not response or not hasattr(response, 'output_text'):
@@ -516,6 +575,11 @@ async def process_prompt_with_agent_thinking(prompt_content: str, industry: str,
     try:
         print(f"🚀 Starting 5-step agent pipeline with sequential thinking for {industry} - {usecase}")
         
+        # Log agent pipeline start
+        log_agent_pipeline_start("prompt_editing_agent", industry, usecase)
+        
+        start_time = time.time()
+        
         # Create the main agent with industry and usecase context
         main_agent = make_prompt_editing_agent(industry, usecase, reasoning_effort)
         
@@ -530,6 +594,9 @@ async def process_prompt_with_agent_thinking(prompt_content: str, industry: str,
         else:
             final_prompt = str(result)
             
+        duration = time.time() - start_time
+        log_agent_pipeline_end("prompt_editing_agent", True, duration)
+        
         print("✅ 5-step pipeline completed successfully!")
         
         return {
@@ -543,6 +610,9 @@ async def process_prompt_with_agent_thinking(prompt_content: str, industry: str,
         }
         
     except Exception as e:
+        duration = time.time() - start_time if 'start_time' in locals() else 0
+        log_agent_pipeline_end("prompt_editing_agent", False, duration)
+        
         print(f"❌ Error in agent pipeline: {e}")
         return {
             "success": False,
@@ -995,6 +1065,91 @@ def analyze_document():
             "error": f"Analysis error: {str(e)}"
         }), 500
 
+@app.route('/api/generate-formats', methods=['POST'])
+def generate_formats_api():
+    """
+    API endpoint to generate JSON input/output formats based on industry and use case
+    """
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({"error": "No JSON data provided"}), 400
+        
+        industry = data.get('industry', '')
+        usecase = data.get('use_case', '')
+        tasks = data.get('tasks', [])
+        reasoning_effort = data.get('reasoning_effort', 'medium')
+        
+        if not industry or not usecase:
+            return jsonify({"error": "Both industry and use_case are required"}), 400
+        
+        print(f"🎯 Generating formats for {industry} - {usecase}")
+        
+        # Generate the JSON formats
+        input_format_dict, output_format_dict = generate_json_formats(industry, usecase, tasks, reasoning_effort)
+        
+        # Format as strings for display
+        input_format_string = format_json_for_prompt(input_format_dict)
+        output_format_string = format_json_for_prompt(output_format_dict)
+        
+        return jsonify({
+            "success": True,
+            "industry": industry,
+            "use_case": usecase,
+            "formats": {
+                "input_format": {
+                    "json_object": input_format_dict,
+                    "json_string": input_format_string
+                },
+                "output_format": {
+                    "json_object": output_format_dict,
+                    "json_string": output_format_string
+                }
+            },
+            "message": f"Generated JSON formats for {industry} - {usecase}"
+        })
+        
+    except Exception as e:
+        print(f"❌ Error generating formats: {e}")
+        return jsonify({
+            "success": False,
+            "error": f"Format generation error: {str(e)}"
+        }), 500
+
+@app.route('/api/logs', methods=['GET'])
+def view_logs():
+    """
+    API endpoint to view recent log entries
+    """
+    try:
+        count = request.args.get('count', 50, type=int)
+        format_type = request.args.get('format', 'json')  # json or html
+        
+        recent_logs = enhanced_logger.get_recent_logs(count)
+        
+        if format_type == 'html':
+            # Return path to HTML log file
+            html_log_path = enhanced_logger.get_html_log_path()
+            if os.path.exists(html_log_path):
+                return send_file(html_log_path, mimetype='text/html')
+            else:
+                return jsonify({"error": "HTML log file not found"}), 404
+        else:
+            # Return JSON format
+            return jsonify({
+                "success": True,
+                "log_count": len(recent_logs),
+                "logs": recent_logs,
+                "html_log_available": os.path.exists(enhanced_logger.get_html_log_path())
+            })
+    
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Error retrieving logs: {str(e)}"
+        }), 500
+
 @app.route('/api/health', methods=['GET'])
 def health_check():
     """
@@ -1003,7 +1158,13 @@ def health_check():
     return jsonify({
         "status": "healthy", 
         "message": "Propt API with Sequential Thinking is running",
-        "features": ["Sequential Thinking", "Latest OpenAI Models", "5-Step Agent Pipeline"]
+        "features": [
+            "Sequential Thinking", 
+            "Latest OpenAI Models", 
+            "5-Step Agent Pipeline",
+            "Auto-Generated JSON Formats",
+            "Enhanced HTML Logging"
+        ]
     })
 
 if __name__ == '__main__':

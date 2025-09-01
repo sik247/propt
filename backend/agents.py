@@ -6,6 +6,8 @@ from typing import Any, Dict, List, Optional, Type
 from pydantic import BaseModel
 from openai import OpenAI
 import os
+from enhanced_logging import log_model_request, log_model_response, log_model_error
+import time
 
 # Initialize client lazily to avoid import-time errors
 client = None
@@ -80,15 +82,48 @@ class Runner:
         """Run a simple agent without tools"""
         try:
             client = get_client()
-            response = client.responses.create(
+            
+            # Log the agent request
+            full_prompt = f"{agent.instructions}\n\nUser: {input_data}"
+            log_model_request(
                 model=agent.model,
-                input=f"{agent.instructions}\n\nUser: {input_data}",
-                tools=[{"type": "web_search_preview"}],
-                reasoning={"effort": agent.reasoning_effort}
+                prompt=full_prompt,
+                reasoning_effort=agent.reasoning_effort,
+                agent_name=agent.name,
+                output_type=str(agent.output_type) if agent.output_type else None
             )
             
-            content = response.output_text
-            print(f"✅ {agent.name} completed")
+            start_time = time.time()
+            try:
+                response = client.responses.create(
+                    model=agent.model,
+                    input=full_prompt,
+                    tools=[{"type": "web_search_preview"}],
+                    reasoning={"effort": agent.reasoning_effort}
+                )
+                
+                processing_time = time.time() - start_time
+                content = response.output_text
+                
+                # Log the successful response
+                log_model_response(
+                    model=agent.model,
+                    response=content,
+                    processing_time=processing_time,
+                    agent_name=agent.name
+                )
+                
+                print(f"✅ {agent.name} completed")
+                
+            except Exception as api_error:
+                processing_time = time.time() - start_time
+                log_model_error(
+                    model=agent.model,
+                    error=str(api_error),
+                    processing_time=processing_time,
+                    agent_name=agent.name
+                )
+                raise api_error
             
             # If output_type is specified, try to parse it
             if agent.output_type:
