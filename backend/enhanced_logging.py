@@ -91,7 +91,7 @@ class EnhancedLogger:
         self._setup_logger()
     
     def _setup_logger(self):
-        """Setup logger with both console and HTML formatters"""
+        """Setup logger with console formatting (file logging disabled for serverless)"""
         self.logger.setLevel(logging.DEBUG)
         
         # Clear existing handlers
@@ -108,18 +108,47 @@ class EnhancedLogger:
         console_handler.setFormatter(console_formatter)
         self.logger.addHandler(console_handler)
         
-        # HTML file handler
-        log_dir = os.path.join(os.path.dirname(__file__), 'logs')
-        os.makedirs(log_dir, exist_ok=True)
+        # Check if we're in a serverless environment (Vercel, Lambda, etc.)
+        is_serverless = (
+            os.getenv('VERCEL') or 
+            os.getenv('AWS_LAMBDA_FUNCTION_NAME') or 
+            os.getenv('NETLIFY') or
+            '/var/task' in os.getcwd() or
+            not os.access(os.path.dirname(__file__), os.W_OK)
+        )
         
-        html_log_file = os.path.join(log_dir, f'model_logs_{self.session_id}.html')
-        html_handler = logging.FileHandler(html_log_file, mode='w')
-        html_handler.setLevel(logging.DEBUG)
-        html_handler.setFormatter(HTMLLogFormatter())
-        self.logger.addHandler(html_handler)
+        if is_serverless:
+            print("🔧 Serverless environment detected - HTML logging disabled")
+            self.html_log_path = None
+            return
         
-        # Initialize HTML file with CSS and structure
-        self._initialize_html_log_file(html_log_file)
+        # Only try HTML file logging in non-serverless environments
+        try:
+            # Try local logs directory
+            log_dir = os.path.join(os.path.dirname(__file__), 'logs')
+            os.makedirs(log_dir, exist_ok=True)
+            html_log_file = os.path.join(log_dir, f'model_logs_{self.session_id}.html')
+            
+            # Test write permission
+            test_file = os.path.join(log_dir, f'test_write_{self.session_id}.tmp')
+            with open(test_file, 'w') as f:
+                f.write('test')
+            os.remove(test_file)
+            
+            # Setup HTML handler
+            html_handler = logging.FileHandler(html_log_file, mode='w')
+            html_handler.setLevel(logging.DEBUG)
+            html_handler.setFormatter(HTMLLogFormatter())
+            self.logger.addHandler(html_handler)
+            
+            # Initialize HTML file with CSS and structure
+            self._initialize_html_log_file(html_log_file)
+            self.html_log_path = html_log_file
+            print(f"✅ HTML logging enabled: {html_log_file}")
+            
+        except (OSError, PermissionError) as e:
+            print(f"⚠️ HTML logging disabled - using console only: {e}")
+            self.html_log_path = None
     
     def _initialize_html_log_file(self, html_log_file: str):
         """Initialize HTML log file with CSS styling"""
@@ -347,9 +376,13 @@ class EnhancedLogger:
             </html>
         """
         
-        # Write initial HTML structure
-        with open(html_log_file, 'w') as f:
-            f.write(html_template + javascript_template)
+        # Write initial HTML structure - with error handling
+        try:
+            with open(html_log_file, 'w') as f:
+                f.write(html_template + javascript_template)
+        except (OSError, PermissionError) as e:
+            print(f"⚠️ Failed to initialize HTML log file: {e}")
+            raise
     
     def log_model_interaction(self, 
                              level: str,
@@ -408,8 +441,7 @@ class EnhancedLogger:
     
     def get_html_log_path(self) -> str:
         """Get path to the HTML log file"""
-        log_dir = os.path.join(os.path.dirname(__file__), 'logs')
-        return os.path.join(log_dir, f'model_logs_{self.session_id}.html')
+        return getattr(self, 'html_log_path', None)
 
 # Global logger instance
 _enhanced_logger = None

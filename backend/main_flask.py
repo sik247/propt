@@ -50,15 +50,22 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 # Initialize enhanced logger if available
+enhanced_logger = None
 if ENHANCED_FEATURES_AVAILABLE:
     try:
         enhanced_logger = get_enhanced_logger("propt_api")
-        print("✅ Enhanced logging initialized")
+        
+        # Check if we're in Vercel/serverless environment
+        is_vercel = os.getenv('VERCEL') or '/var/task' in os.getcwd()
+        if is_vercel:
+            print("🔧 Vercel deployment detected - enhanced features in serverless mode")
+        else:
+            print("✅ Enhanced logging initialized for local development")
+            
     except Exception as e:
         print(f"⚠️ Enhanced logging failed to initialize: {e}")
         ENHANCED_FEATURES_AVAILABLE = False
-else:
-    enhanced_logger = None
+        enhanced_logger = None
 
 # Configure CORS
 CORS(app, resources={
@@ -1155,6 +1162,12 @@ def view_logs():
     API endpoint to view recent log entries
     """
     try:
+        if not ENHANCED_FEATURES_AVAILABLE or enhanced_logger is None:
+            return jsonify({
+                "success": False,
+                "error": "Enhanced logging not available"
+            }), 503
+            
         count = request.args.get('count', 50, type=int)
         format_type = request.args.get('format', 'json')  # json or html
         
@@ -1163,17 +1176,18 @@ def view_logs():
         if format_type == 'html':
             # Return path to HTML log file
             html_log_path = enhanced_logger.get_html_log_path()
-            if os.path.exists(html_log_path):
+            if html_log_path and os.path.exists(html_log_path):
                 return send_file(html_log_path, mimetype='text/html')
             else:
-                return jsonify({"error": "HTML log file not found"}), 404
+                return jsonify({"error": "HTML log file not available"}), 404
         else:
             # Return JSON format
+            html_log_path = enhanced_logger.get_html_log_path()
             return jsonify({
                 "success": True,
                 "log_count": len(recent_logs),
                 "logs": recent_logs,
-                "html_log_available": os.path.exists(enhanced_logger.get_html_log_path())
+                "html_log_available": html_log_path and os.path.exists(html_log_path) if html_log_path else False
             })
     
     except Exception as e:
